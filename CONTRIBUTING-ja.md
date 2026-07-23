@@ -109,6 +109,19 @@ bun run format:all  # format + format:cpp
 
 `src/ops/generated/` の op ラッパは `scripts/codegen/` が実行時 op registry（`TF_GetAllOpList`）から生成します。**生成ファイルを手編集しない**でください。ジェネレータ/テンプレートを直して `bun run codegen` を実行します。
 
+## テスト fixture の再生成
+
+SavedModel のテストは `test/fixtures/times_two`（y = x * 2）という極小 fixture を使います。TensorFlow の Python パッケージは fixture を**生成するときだけ**必要で、tfjs-native 自体は依存しません。Python 3.12 を使ってください（TensorFlow に 3.13/3.14 の wheel が無いため）:
+
+```sh
+uv venv --python 3.12 .venv-tf
+uv pip install --python .venv-tf tensorflow-cpu
+.venv-tf/Scripts/python scripts/fixtures/make_saved_model.py   # Windows
+.venv-tf/bin/python scripts/fixtures/make_saved_model.py       # macOS / Linux
+```
+
+fixture かネイティブ addon が無い場合、これらのテストは自動的にスキップされます。
+
 ## プルリクエスト
 
 - `main` からブランチを切る（`feat/…`, `fix/…`, `chore/…`）。`main` へ直接 push しない。

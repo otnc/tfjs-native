@@ -58,11 +58,32 @@ eager 実行パスは稼働済みです。**約 1,295 op** を TF の op registr
 | 形状 / dtype | `reshape`, `transpose`, `cast` |
 | エスケープハッチ | `runOp(name, inputs, attrs, numOutputs)` — 任意の op を名前で実行 |
 
+### SavedModel（M3）
+
+TensorFlow の SavedModel をロードし、signature 経由で推論を実行します。feed/fetch は signature 自身のキーで指定するので、生のグラフテンソル名を扱う必要はありません。
+
+| API | 説明 |
+|---|---|
+| `loadSavedModel(dir, { tags? }): SavedModel` | `saved_model.pb` を含むディレクトリをロード。tags の既定は `["serve"]`。 |
+| `model.signatureNames: string[]` | 利用可能な signature（例: `["serving_default"]`）。 |
+| `model.signatures` | signature ごとの入出力キーと、対応するグラフテンソル名。 |
+| `model.predict(feeds)` | `serving_default` signature を実行。 |
+| `model.run(signature, feeds)` | 名前を指定して signature を実行。 |
+| `model.dispose()` | セッションを閉じ、グラフを解放（冪等）。 |
+
+```ts
+import { loadSavedModel, tensor } from "tfjs-native";
+
+const model = loadSavedModel("./my_saved_model");
+const { y } = model.predict({ x: tensor([1, 2, 3]) });
+console.log(await y.array());
+model.dispose();
+```
+
 ## 今後の予定
 
 | マイルストーン | 機能 |
 |---|---|
-| **M3** | SavedModel / GraphDef のロードと推論（`loadSavedModel`, `model.run`）。 |
 | **M4** | 薄い学習レイヤ: GradientTape 相当、`sgd`/`adam`/`rmsprop`、`minimize`。 |
 | **M5** | OS 別 prebuild、libtensorflow の自動取得、trusted publishing リリース。 |
 

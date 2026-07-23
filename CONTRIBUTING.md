@@ -109,6 +109,19 @@ Bumping the default version follows the **libtensorflow Version Policy** in [doc
 
 Op wrappers under `src/ops/generated/` are produced by `scripts/codegen/` from the runtime op registry (`TF_GetAllOpList`). **Do not hand-edit generated files** — change the generator/template and run `bun run codegen`.
 
+## Regenerating test fixtures
+
+The SavedModel tests use a tiny fixture in `test/fixtures/times_two` (y = x * 2). TensorFlow's Python package is needed only to *produce* it — tfjs-native never depends on it. Use Python 3.12 (TensorFlow has no 3.13/3.14 wheels):
+
+```sh
+uv venv --python 3.12 .venv-tf
+uv pip install --python .venv-tf tensorflow-cpu
+.venv-tf/Scripts/python scripts/fixtures/make_saved_model.py   # Windows
+.venv-tf/bin/python scripts/fixtures/make_saved_model.py       # macOS / Linux
+```
+
+Those tests skip automatically when the fixture or the native addon is missing.
+
 ## Pull requests
 
 - Branch from `main` (`feat/…`, `fix/…`, `chore/…`); never push to `main` directly.

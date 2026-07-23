@@ -255,8 +255,8 @@ bun run format       # biome format --write
 1. **M0 skeleton**: the addon loads libtensorflow and returns `version()` as a smoke test. Done.
 2. **M1 Tensor**: dtype/shape, JS<->TF data round-trip, `data()`/`dataSync()`/`array()`, plus `tidy`. <- current. TS layer + native C++ landed and unit-tested (pure parts); the native round-trip test is skip-guarded until the addon is built against libtensorflow (needs the M5 install path + a C++ toolchain).
 3. **M2 Eager ops**: done. Native `execute` + TFE_Context + a hand-written op set (M2a), plus ~1,295 wrappers generated from `TF_GetAllOpList` via protobufjs (M2b). The generated file (`src/ops/generated/index.ts`) is committed and regenerated on a libtensorflow bump.
-4. **M3 SavedModel**: load & run inference, signature resolution. <- current
-5. **M4 Training**: GradientTape equivalent + SGD/Adam + `minimize`.
+4. **M3 SavedModel**: done. `TF_LoadSessionFromSavedModel` + `TF_SessionRun` in the addon, with signatures parsed from the MetaGraphDef by a small hand-rolled protobuf reader (keeps runtime dependencies at zero extra).
+5. **M4 Training**: GradientTape equivalent + SGD/Adam + `minimize`. <- current
 6. **M5 Distribution**: prebuild matrix + automatic libtensorflow fetch + trusted publish.
 
 ## 13. Glossary

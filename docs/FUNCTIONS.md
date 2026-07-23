@@ -58,11 +58,32 @@ A set of hand-written ops sits on top with friendlier signatures:
 | Shape / dtype | `reshape`, `transpose`, `cast` |
 | Escape hatch | `runOp(name, inputs, attrs, numOutputs)` — call any op by name |
 
+### SavedModel (M3)
+
+Load a TensorFlow SavedModel and run inference through its signatures. Feeds and fetches are keyed by the signature's own names, so you never touch raw graph tensor names.
+
+| API | Description |
+|---|---|
+| `loadSavedModel(dir, { tags? }): SavedModel` | Loads the directory containing `saved_model.pb`. Tags default to `["serve"]`. |
+| `model.signatureNames: string[]` | Available signatures (e.g. `["serving_default"]`). |
+| `model.signatures` | Per-signature input/output keys and their graph tensor names. |
+| `model.predict(feeds)` | Runs the `serving_default` signature. |
+| `model.run(signature, feeds)` | Runs a named signature. |
+| `model.dispose()` | Closes the session and frees the graph (idempotent). |
+
+```ts
+import { loadSavedModel, tensor } from "tfjs-native";
+
+const model = loadSavedModel("./my_saved_model");
+const { y } = model.predict({ x: tensor([1, 2, 3]) });
+console.log(await y.array());
+model.dispose();
+```
+
 ## Planned
 
 | Milestone | Feature |
 |---|---|
-| **M3** | SavedModel / GraphDef load and inference (`loadSavedModel`, `model.run`). |
 | **M4** | Thin training layer: GradientTape equivalent, `sgd`/`adam`/`rmsprop`, `minimize`. |
 | **M5** | Prebuilt binaries per OS, automatic libtensorflow fetch, trusted-publish releases. |
 

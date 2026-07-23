@@ -255,8 +255,8 @@ bun run format       # biome format --write
 1. **M0 スケルトン**: addon が libtensorflow をロードし `version()` を返す smoke test。完了。
 2. **M1 Tensor**: dtype/shape、JS↔TF のデータ往復、`data()`/`dataSync()`/`array()`、および `tidy`。← 現在地。TS 層 + native C++ を実装し、純粋部はユニットテスト済み。ネイティブ round-trip テストは、libtensorflow に対して addon をビルドするまで skip 保護（M5 の install パス + C++ ツールチェーンが必要）。
 3. **M2 Eager ops**: 完了。native `execute` + TFE_Context + 手書き op セット（M2a）に加え、protobufjs による `TF_GetAllOpList` から約 1,295 ラッパを生成（M2b）。生成ファイル（`src/ops/generated/index.ts`）はコミット済みで、libtensorflow 更新時に再生成する。
-4. **M3 SavedModel**: ロードと推論実行、signature 解決。← 現在地
-5. **M4 学習**: GradientTape 相当 + SGD/Adam + `minimize`。
+4. **M3 SavedModel**: 完了。addon 側で `TF_LoadSessionFromSavedModel` + `TF_SessionRun` を実装し、signature は MetaGraphDef を自前の小さな protobuf リーダで解析（実行時依存をゼロのまま維持）。
+5. **M4 学習**: GradientTape 相当 + SGD/Adam + `minimize`。← 現在地
 6. **M5 配布**: prebuild マトリクス + libtensorflow 自動取得 + trusted publish。
 
 ## 13. 用語
