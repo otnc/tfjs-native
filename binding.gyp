@@ -10,7 +10,8 @@
       "sources": [
         "src/native/binding.cc",
         "src/native/tensor.cc",
-        "src/native/execute.cc"
+        "src/native/execute.cc",
+        "src/native/model.cc"
       ],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",

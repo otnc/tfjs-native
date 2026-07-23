@@ -30,6 +30,9 @@ void RegisterTensor(Napi::Env env, Napi::Object exports);
 // Registers eager execute / gradient / op-registry functions on `exports`.
 void RegisterExecute(Napi::Env env, Napi::Object exports);
 
+// Registers SavedModel load / run / dispose functions on `exports`.
+void RegisterModel(Napi::Env env, Napi::Object exports);
+
 // Throws a JS error carrying the TF_Status code+message when `status` is not OK.
 // Returns true when an error was thrown (caller should bail out).
 bool ThrowIfError(Napi::Env env, TF_Status* status);
