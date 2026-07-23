@@ -1,0 +1,5 @@
+# Normalize line endings to LF for text files (prevents CRLF churn on Windows).
+* text=auto eol=lf
+
+# Binary artifacts — never touch.
+*.node binary
