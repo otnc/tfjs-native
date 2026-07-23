@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # Build the native addon on every target OS and collect prebuilt binaries.
+  prebuild:
+    name: prebuild (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+        env:
+          TFJS_NATIVE_SKIP_INSTALL: "1"
+
+      # Fetches libtensorflow for this OS/arch (scripts/install.mjs, M5).
+      - name: Fetch libtensorflow
+        run: bun scripts/install.mjs
+
+      - name: Build prebuild
+        run: bun run prebuildify
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prebuilds-${{ matrix.os }}
+          path: prebuilds/
+          if-no-files-found: error
+
+  # Aggregate prebuilds and publish to npm via trusted publishing (OIDC).
+  # No NPM_TOKEN: the registry authenticates the workflow through id-token.
+  publish:
+    name: publish (npm trusted publishing)
+    needs: prebuild
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required for npm trusted publishing + provenance
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      # Node + npm are needed for trusted publishing (bun publish has no OIDC yet).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - run: bun install --frozen-lockfile
+        env:
+          TFJS_NATIVE_SKIP_INSTALL: "1"
+
+      - name: Collect prebuilds
+        uses: actions/download-artifact@v4
+        with:
+          pattern: prebuilds-*
+          path: prebuilds
+          merge-multiple: true
+
+      - name: Build dist
+        run: bun run build
+
+      # Trusted publishing needs npm >= 11.5.1; provenance is attached automatically.
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - name: Publish
+        run: npm publish --access public --provenance

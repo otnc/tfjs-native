@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: check (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    env:
+      # libtensorflow fetch is not wired yet (M5); the TS checks below do not
+      # need the native addon. Native build joins CI once install.mjs lands.
+      TFJS_NATIVE_SKIP_INSTALL: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      - name: Biome check (src/, scripts/, configs — lint + format)
+        run: bun run check
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Test
+        run: bun test
+
+  cpp-format:
+    name: cpp-format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # uv provides uvx, which runs the pinned clang-format (see check:cpp).
+      - uses: astral-sh/setup-uv@v6
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Check C++ formatting (src/native)
+        run: bun run check:cpp
