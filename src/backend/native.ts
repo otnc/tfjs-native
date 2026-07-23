@@ -76,8 +76,23 @@ export interface NativeBinding {
   /** Runs one op and returns its output handles. `numOutputs` sizes the buffer. */
   execute(opName: string, inputs: Handle[], attrs: AttrMap, numOutputs: number): Handle[];
 
-  // The rest of the surface (gradient / loadSavedModel / ...) is declared in
-  // docs/DESIGN.md §5 and added as milestones land.
+  // --- SavedModel (M3) ---
+  /** Loads a SavedModel, returning its session handle and serialized MetaGraphDef. */
+  loadSavedModel(dir: string, tags: string[]): { handle: Model; metaGraphDef: Uint8Array };
+  /** Runs a session by graph tensor name; feeds and fetches are parallel arrays. */
+  runSavedModel(
+    model: Model,
+    inputOps: string[],
+    inputIndices: number[],
+    inputs: Handle[],
+    outputOps: string[],
+    outputIndices: number[],
+  ): Handle[];
+  /** Closes the session and frees the graph. Idempotent. */
+  deleteSavedModel(model: Model): void;
+
+  // The rest of the surface (gradient / ...) is declared in docs/DESIGN.md §5
+  // and added as milestones land.
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: node-gyp-build has no bundled types.
