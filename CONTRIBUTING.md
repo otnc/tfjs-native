@@ -14,7 +14,7 @@ Working on the **pure-TS** parts only needs **Bun**. Building the **native addon
 |---|---|---|---|
 | **Bun** | latest | package manager + runtime + test runner (do not pin its version) | <https://bun.sh> |
 | **Node.js** | >= 22 | ABI target for the prebuilt addon; also runs `node-gyp` | <https://nodejs.org> |
-| **Python** | 3.x (3.14 tested) | required by `node-gyp` to configure the build | via [uv](https://docs.astral.sh/uv/getting-started/installation/) (below) |
+| **Python** | 3.x (3.12 tested) | required by `node-gyp` to configure the build | via [uv](https://docs.astral.sh/uv/getting-started/installation/) (below) |
 | **C++ toolchain** | per-OS | compiles the N-API addon | see [below](#c-toolchain-per-os) |
 | **libtensorflow** | 2.10.0 (default) | the native C library the addon links | fetched automatically |
 
@@ -22,8 +22,8 @@ Working on the **pure-TS** parts only needs **Bun**. Building the **native addon
 
 ```sh
 # install uv (official installer), then a managed CPython:
-uv python install    # reads .python-version (3.14)
-uv python find 3.14  # prints the python.exe / python path
+uv python install    # reads .python-version (3.12)
+uv python find 3.12  # prints the python.exe / python path
 ```
 
 The interpreter version is pinned in `.python-version`. There is **no `uv.lock`**: the project has no Python dependencies — uv only provides a CPython for `node-gyp`.
@@ -32,9 +32,9 @@ Point `node-gyp` at it when building the addon:
 
 ```sh
 # Windows (PowerShell)
-$env:PYTHON = (uv python find 3.14)
+$env:PYTHON = (uv python find 3.12)
 # macOS / Linux
-export PYTHON="$(uv python find 3.14)"
+export PYTHON="$(uv python find 3.12)"
 ```
 
 ### C++ toolchain per OS
@@ -68,7 +68,7 @@ TFJS_NATIVE_SKIP_INSTALL=1 bun install
 node scripts/install.mjs
 
 # build the native addon (needs Python + the C++ toolchain)
-PYTHON="$(uv python find 3.14)" bun run build:native
+PYTHON="$(uv python find 3.12)" bun run build:native
 ```
 
 On **Windows**, the runtime needs `tensorflow.dll` to be discoverable when the addon loads — add `deps/libtensorflow/lib` to `PATH`, or copy `tensorflow.dll` next to the built `.node`.

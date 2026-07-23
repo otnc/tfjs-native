@@ -14,7 +14,7 @@
 |---|---|---|---|
 | **Bun** | 最新 | パッケージマネージャ＋ランタイム＋テストランナー（バージョン固定しない） | <https://bun.sh> |
 | **Node.js** | 22 以上 | prebuild addon の ABI ターゲット。`node-gyp` の実行にも使用 | <https://nodejs.org> |
-| **Python** | 3.x（3.14 で確認） | `node-gyp` がビルド構成に必要 | [uv](https://docs.astral.sh/uv/getting-started/installation/) 経由（下記） |
+| **Python** | 3.x（3.12 で確認） | `node-gyp` がビルド構成に必要 | [uv](https://docs.astral.sh/uv/getting-started/installation/) 経由（下記） |
 | **C++ ツールチェーン** | OS 別 | N-API addon のコンパイル | [下記](#os-別-c-ツールチェーン) |
 | **libtensorflow** | 2.10.0（既定） | addon がリンクするネイティブ C ライブラリ | 自動取得 |
 
@@ -22,8 +22,8 @@
 
 ```sh
 # uv（公式インストーラ）を入れてから、管理下の CPython を導入:
-uv python install    # .python-version（3.14）を読む
-uv python find 3.14  # python.exe / python のパスを表示
+uv python install    # .python-version（3.12）を読む
+uv python find 3.12  # python.exe / python のパスを表示
 ```
 
 インタプリタのバージョンは `.python-version` に固定しています。**`uv.lock` はありません**。本プロジェクトに Python 依存は無く、uv は `node-gyp` 用の CPython を用意するだけだからです。
@@ -32,9 +32,9 @@ addon をビルドするとき `node-gyp` にそのパスを渡します:
 
 ```sh
 # Windows (PowerShell)
-$env:PYTHON = (uv python find 3.14)
+$env:PYTHON = (uv python find 3.12)
 # macOS / Linux
-export PYTHON="$(uv python find 3.14)"
+export PYTHON="$(uv python find 3.12)"
 ```
 
 ### OS 別 C++ ツールチェーン
@@ -68,7 +68,7 @@ TFJS_NATIVE_SKIP_INSTALL=1 bun install
 node scripts/install.mjs
 
 # ネイティブ addon をビルド（Python と C++ ツールチェーンが必要）
-PYTHON="$(uv python find 3.14)" bun run build:native
+PYTHON="$(uv python find 3.12)" bun run build:native
 ```
 
 **Windows** では、addon ロード時に `tensorflow.dll` が解決できる必要があります。`deps/libtensorflow/lib` を `PATH` に追加するか、ビルドした `.node` の隣に `tensorflow.dll` をコピーしてください。
