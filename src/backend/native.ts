@@ -29,6 +29,24 @@ function findPackageRoot(start: string): string {
 
 const packageRoot = findPackageRoot(dirname(fileURLToPath(import.meta.url)));
 
+/**
+ * Windows has no rpath: the addon resolves its `tensorflow.dll` dependency
+ * through PATH at load time. Linux/macOS embed an rpath at build time instead
+ * (see binding.gyp), so this is a no-op there.
+ */
+function ensureLibraryPath(root: string): void {
+  if (process.platform !== "win32") return;
+  const override = process.env.LIBTENSORFLOW_ROOT;
+  const libDir = override ? join(override, "lib") : join(root, "deps", "libtensorflow", "lib");
+  if (!existsSync(libDir)) return;
+  const current = process.env.PATH ?? "";
+  if (!current.split(";").includes(libDir)) {
+    process.env.PATH = `${libDir};${current}`;
+  }
+}
+
+ensureLibraryPath(packageRoot);
+
 /** Opaque native handle types. Never inspected from JS. */
 export type Ctx = { readonly __brand: "Ctx" };
 export type Handle = { readonly __brand: "Handle" };
