@@ -3,3 +3,5 @@
 
 # Binary artifacts — never touch.
 *.node binary
+*.pb binary
+test/fixtures/** binary
