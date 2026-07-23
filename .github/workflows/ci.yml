@@ -23,7 +23,7 @@ jobs:
     env:
       TFJS_NATIVE_SKIP_INSTALL: "1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
 
@@ -50,16 +50,16 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-13, windows-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
 
       # node-gyp needs a real Node and a Python.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -68,7 +68,7 @@ jobs:
           TFJS_NATIVE_SKIP_INSTALL: "1"
 
       - name: Cache libtensorflow
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: deps/libtensorflow
           key: libtensorflow-${{ runner.os }}-${{ hashFiles('scripts/install.mjs') }}
@@ -86,10 +86,13 @@ jobs:
     name: cpp-format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # uv provides uvx, which runs the pinned clang-format (see check:cpp).
-      - uses: astral-sh/setup-uv@v6
+      # No Python dependencies here, so uv's dependency cache has nothing to key on.
+      - uses: astral-sh/setup-uv@v9
+        with:
+          enable-cache: false
 
       - uses: oven-sh/setup-bun@v2
 
