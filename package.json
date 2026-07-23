@@ -1,0 +1,76 @@
+{
+  "name": "tfjs-native",
+  "version": "0.0.0",
+  "description": "TensorFlow (C++) native wrapper for Node.js — full op-registry coverage via the libtensorflow C API.",
+  "keywords": [
+    "tensorflow",
+    "tfjs",
+    "machine-learning",
+    "native",
+    "n-api",
+    "libtensorflow"
+  ],
+  "license": "Apache-2.0",
+  "author": "otoneko",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/otnc/tfjs-native.git"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.cts",
+  "files": [
+    "dist",
+    "prebuilds",
+    "src/native",
+    "binding.gyp",
+    "scripts/install.mjs",
+    "docs"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "build:native": "node-gyp rebuild",
+    "prebuildify": "prebuildify --napi --strip",
+    "codegen": "node scripts/codegen/index.mjs",
+    "install": "node scripts/install.mjs",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome lint .",
+    "check": "biome check .",
+    "check:cpp": "uvx clang-format@22.1.8 --dry-run --Werror src/native/*.cc src/native/*.h",
+    "check:all": "bun run check && bun run check:cpp",
+    "format": "biome format --write .",
+    "format:cpp": "uvx clang-format@22.1.8 -i src/native/*.cc src/native/*.h",
+    "format:all": "bun run format && bun run format:cpp"
+  },
+  "dependencies": {
+    "node-addon-api": "^8.9.0",
+    "node-gyp-build": "^4.8.4"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.5",
+    "@types/bun": "^1.3.14",
+    "node-gyp": "^13.0.1",
+    "prebuildify": "^6.0.1",
+    "protobufjs": "^8.7.1",
+    "tsdown": "^0.22.13",
+    "typescript": "^6.0.3"
+  }
+}
