@@ -38,7 +38,8 @@
     "src/native",
     "binding.gyp",
     "scripts/install.mjs",
-    "docs"
+    "docs",
+    "README-ja.md"
   ],
   "engines": {
     "node": ">=22"
