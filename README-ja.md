@@ -19,6 +19,7 @@ Original: [tensorflow/tensorflow](https://github.com/tensorflow/tensorflow)
 ## 動作要件
 
 - **Node.js 22 以上**（**Windows / Linux / macOS**）。
+- prebuild を配布するのは **linux-x64**・**darwin-x64**・**win32-x64** です。それ以外の環境ではソースからビルドします（Python と C++ ツールチェーンが必要）。
 - `libtensorflow`（C ライブラリ）はインストール時に自動取得されます。対応環境では手動セットアップは不要です。
 
 ## インストール

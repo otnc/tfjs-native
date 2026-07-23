@@ -19,6 +19,7 @@ Original: [tensorflow/tensorflow](https://github.com/tensorflow/tensorflow)
 ## Requirements
 
 - **Node.js 22+**, on **Windows / Linux / macOS**.
+- Prebuilt addons ship for **linux-x64**, **darwin-x64**, and **win32-x64**; other platforms build from source (needs Python and a C++ toolchain).
 - `libtensorflow` (the C library) is fetched automatically on install — no manual setup on supported platforms.
 
 ## Install
