@@ -45,6 +45,7 @@
     "node": ">=22"
   },
   "scripts": {
+    "setup": "node scripts/setup.mjs",
     "build": "tsdown",
     "build:native": "node-gyp rebuild",
     "prebuildify": "prebuildify --napi --strip",
