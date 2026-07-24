@@ -132,6 +132,12 @@ export interface NativeBinding {
     attrs: AttrMap,
     numOutputs: number,
   ): Port[];
+  /**
+   * Adds d(sum(ys))/dx nodes for each x, returning their ports. An entry is
+   * null when the gradient is not reachable from that input. Throws when an op
+   * in the path has no registered gradient.
+   */
+  graphAddGradients(graph: Graph, ys: Port[], xs: Port[]): (Port | null)[];
   /** Creates a session over the graph; the session takes ownership of it. */
   graphNewSession(graph: Graph): Session;
 

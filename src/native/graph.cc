@@ -234,6 +234,49 @@ Napi::Value GraphAddOp(const Napi::CallbackInfo& info) {
   return out;
 }
 
+// graphAddGradients(graph, ys, xs) -> Port[]
+//
+// Adds d(sum(ys))/dx nodes for each x. Coverage comes from TensorFlow's C++
+// gradient registry (140 ops in 2.10), so an op without a registered gradient
+// fails here — the Status message names it.
+Napi::Value GraphAddGradients(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  GraphBox* box = UnwrapGraph(info[0]);
+  Napi::Array ysArr = info[1].As<Napi::Array>();
+  Napi::Array xsArr = info[2].As<Napi::Array>();
+
+  std::vector<TF_Output> ys(ysArr.Length());
+  for (uint32_t i = 0; i < ysArr.Length(); i++) {
+    if (!PortFrom(env, box->graph, ysArr.Get(i), &ys[i])) return env.Undefined();
+  }
+  std::vector<TF_Output> xs(xsArr.Length());
+  for (uint32_t i = 0; i < xsArr.Length(); i++) {
+    if (!PortFrom(env, box->graph, xsArr.Get(i), &xs[i])) return env.Undefined();
+  }
+
+  std::vector<TF_Output> dy(xs.size());
+  TF_Status* status = TF_NewStatus();
+  TF_AddGradients(box->graph, ys.data(), static_cast<int>(ys.size()), xs.data(),
+                  static_cast<int>(xs.size()), nullptr, status, dy.data());
+  if (ThrowIfError(env, status)) {
+    TF_DeleteStatus(status);
+    return env.Undefined();
+  }
+  TF_DeleteStatus(status);
+
+  Napi::Array out = Napi::Array::New(env, dy.size());
+  for (size_t i = 0; i < dy.size(); i++) {
+    // A gradient can legitimately be absent (unreachable input); report null.
+    if (dy[i].oper == nullptr) {
+      out.Set(static_cast<uint32_t>(i), env.Null());
+      continue;
+    }
+    out.Set(static_cast<uint32_t>(i),
+            MakePort(env, TF_OperationName(dy[i].oper), dy[i].index));
+  }
+  return out;
+}
+
 // graphNewSession(graph) -> SessionHandle (the session takes over the graph)
 Napi::Value GraphNewSession(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
@@ -261,8 +304,8 @@ void RegisterGraph(Napi::Env env, Napi::Object exports) {
   exports.Set("graphPlaceholder", Napi::Function::New(env, GraphPlaceholder));
   exports.Set("graphConst", Napi::Function::New(env, GraphConst));
   exports.Set("graphAddOp", Napi::Function::New(env, GraphAddOp));
+  exports.Set("graphAddGradients", Napi::Function::New(env, GraphAddGradients));
   exports.Set("graphNewSession", Napi::Function::New(env, GraphNewSession));
-  // TODO(M4b): graphAddGradients.
 }
 
 }  // namespace tfjs_native
