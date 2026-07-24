@@ -98,6 +98,8 @@ bun run format:all  # format + format:cpp
 
 `check`・`lint`（biome）は `src/`・`scripts/`・ルート設定の JS/TS/JSON を、`check:cpp` は C++ addon を対象にします。C++ は固定バージョンの `clang-format`（設定は `.clang-format`、`uvx` 経由で実行するため別途インストール不要）を使います。`check:all` は両方を実行します。CI は biome を全 OS、C++ チェックを Linux で実行します。
 
+`bun run prebuildify` は prebuildify の CLI ではなく **JS API を直接呼び出します**（`scripts/prebuildify.mjs`）。prebuildify の CLI は Windows で `node-gyp.cmd` という決め打ちの名前を呼び出しますが、bun が生成する `node_modules/.bin` のシムは `.exe`/`.bunx` であり `.cmd` ではないため、CLI 形式だと `'node-gyp.cmd' is not recognized` で失敗します。このスクリプトは明示的なパスを渡すことでこれを回避し、Python の解決も `build:native` と同じ方法で行います。
+
 コンパイル済み addon を要するテストは **skip 保護**されています。`bun run build:native` で addon が生成されると自動的に実行され、無ければスキップされるので、ネイティブビルド無しでも `bun test` は緑のままです。
 
 ## プラットフォーム追加 / libtensorflow のバージョン更新

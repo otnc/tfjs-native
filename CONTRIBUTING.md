@@ -98,6 +98,8 @@ bun run format:all  # format + format:cpp
 
 `check`/`lint` (biome) cover all JS/TS/JSON under `src/`, `scripts/`, and the root configs; `check:cpp` covers the C++ addon with a pinned `clang-format` (config in `.clang-format`, run via `uvx` — no separate install). `check:all` runs both. CI runs biome on every OS and the C++ check on Linux.
 
+`bun run prebuildify` calls prebuildify's JS API directly (`scripts/prebuildify.mjs`) rather than its CLI: prebuildify's CLI shells out to the literal name `node-gyp.cmd` on Windows, but bun's `node_modules/.bin` shims there are `.exe`/`.bunx`, not `.cmd`, so the CLI form fails with `'node-gyp.cmd' is not recognized`. The script passes an explicit path instead, and resolves Python the same way `build:native` does.
+
 Tests that need the compiled addon are **skip-guarded**: they run automatically once `bun run build:native` has produced the addon, and are skipped otherwise, so `bun test` stays green without a native build.
 
 ## Adding a platform / bumping libtensorflow
