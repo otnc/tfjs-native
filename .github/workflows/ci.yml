@@ -90,7 +90,7 @@ jobs:
 
       # uv provides uvx, which runs the pinned clang-format (see check:cpp).
       # No Python dependencies here, so uv's dependency cache has nothing to key on.
-      - uses: astral-sh/setup-uv@v9
+      - uses: astral-sh/setup-uv@v9.0.0
         with:
           enable-cache: false
 
