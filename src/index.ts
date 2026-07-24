@@ -19,6 +19,9 @@ export { Tensor } from "./tensor/tensor.js";
 export type { NestedList, TensorScalar, TensorValues } from "./tensor/types.js";
 export type { ValueAndGrads } from "./training/gradients.js";
 export { grads, valueAndGrads } from "./training/gradients.js";
+export type { AdamOptions, RmsPropOptions, SgdOptions } from "./training/optimizer.js";
+export { adam, Optimizer, rmsprop, sgd } from "./training/optimizer.js";
+export { Variable, variable } from "./training/variable.js";
 
 /** Returns the linked libtensorflow version (M0 smoke test). */
 export function version(): string {
