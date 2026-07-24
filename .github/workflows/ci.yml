@@ -54,14 +54,17 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
-      # node-gyp needs a real Node and a Python.
+      # node-gyp needs a real Node.
       - uses: actions/setup-node@v7
         with:
           node-version: 22
 
-      - uses: actions/setup-python@v7
+      # bun run build:native (scripts/build-native.mjs) resolves its own
+      # Python via uv (uv is a required prerequisite — see docs/RULES.md /
+      # CONTRIBUTING.md), so no separate Python setup step is needed here.
+      - uses: astral-sh/setup-uv@v9.0.0
         with:
-          python-version-file: .python-version
+          enable-cache: false
 
       - run: bun install --frozen-lockfile
         env:
@@ -76,8 +79,10 @@ jobs:
       - name: Fetch libtensorflow
         run: node scripts/install.mjs
 
+      # Exercises the real contributor/release command, not a bypass, so CI
+      # actually validates it (see scripts/build-native.mjs).
       - name: Build addon
-        run: node node_modules/node-gyp/bin/node-gyp.js rebuild
+        run: bun run build:native
 
       - name: Test (with native addon)
         run: bun test
