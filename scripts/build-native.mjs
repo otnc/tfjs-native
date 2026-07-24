@@ -1,7 +1,8 @@
 // Builds the native addon. Resolves a Python for node-gyp automatically via uv
-// when PYTHON is not already set, so plain `bun run build:native` works on its
-// own — not only as part of `bun run setup` — even when the system's own
-// Python installs are missing, broken, or too old for node-gyp.
+// (see scripts/lib/python.mjs) when PYTHON is not already set, so plain
+// `bun run build:native` works on its own — not only as part of
+// `bun run setup`. Fails fast with a clear message if uv is missing, instead
+// of letting node-gyp's own Python probing produce a wall of errors.
 //
 //   node scripts/build-native.mjs [node-gyp args...]   # default: rebuild
 
@@ -29,10 +30,7 @@ function main() {
   const result = spawnSync("node", [gyp, ...gypArgs], {
     cwd: root,
     stdio: "inherit",
-    env: {
-      ...process.env,
-      ...(python !== undefined ? { PYTHON: python, npm_config_python: python } : {}),
-    },
+    env: { ...process.env, PYTHON: python, npm_config_python: python },
   });
   if (result.error !== undefined) {
     throw result.error;
@@ -40,4 +38,9 @@ function main() {
   process.exit(result.status ?? 1);
 }
 
-main();
+try {
+  main();
+} catch (error) {
+  console.error(`build:native failed: ${error instanceof Error ? error.message : error}`);
+  process.exit(1);
+}
