@@ -11,6 +11,7 @@
         "src/native/binding.cc",
         "src/native/tensor.cc",
         "src/native/execute.cc",
+        "src/native/session.cc",
         "src/native/model.cc"
       ],
       "include_dirs": [

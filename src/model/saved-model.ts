@@ -5,7 +5,7 @@
 // graph tensor names ("serving_default_x:0").
 
 import { dtypeName } from "../backend/dtype.js";
-import { binding, type Model } from "../backend/native.js";
+import { binding, type Session } from "../backend/native.js";
 import { Tensor, tensorHandle } from "../tensor/tensor.js";
 import { parseSignatures, parseTensorName, type SignatureDef } from "./proto.js";
 
@@ -17,13 +17,13 @@ export interface LoadSavedModelOptions {
   tags?: string[];
 }
 
-const MODELS = new WeakMap<SavedModel, Model>();
+const MODELS = new WeakMap<SavedModel, Session>();
 
 export class SavedModel {
   /** Signature name -> its feed/fetch keys and graph tensor names. */
   readonly signatures: Readonly<Record<string, SignatureDef>>;
 
-  constructor(model: Model, signatures: Record<string, SignatureDef>) {
+  constructor(model: Session, signatures: Record<string, SignatureDef>) {
     MODELS.set(this, model);
     this.signatures = signatures;
   }
@@ -79,7 +79,7 @@ export class SavedModel {
       outputIndices.push(index);
     }
 
-    const handles = binding.runSavedModel(
+    const handles = binding.sessionRun(
       model,
       inputOps,
       inputIndices,
@@ -108,7 +108,7 @@ export class SavedModel {
   dispose(): void {
     const model = MODELS.get(this);
     if (model === undefined) return;
-    binding.deleteSavedModel(model);
+    binding.sessionDelete(model);
     MODELS.delete(this);
   }
 }

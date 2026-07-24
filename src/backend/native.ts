@@ -50,7 +50,7 @@ ensureLibraryPath(packageRoot);
 /** Opaque native handle types. Never inspected from JS. */
 export type Ctx = { readonly __brand: "Ctx" };
 export type Handle = { readonly __brand: "Handle" };
-export type Model = { readonly __brand: "Model" };
+export type Session = { readonly __brand: "Session" };
 
 /**
  * A single op attribute, tagged by its TF attr kind. `type`/`typeList` carry
@@ -94,20 +94,20 @@ export interface NativeBinding {
   /** Runs one op and returns its output handles. `numOutputs` sizes the buffer. */
   execute(opName: string, inputs: Handle[], attrs: AttrMap, numOutputs: number): Handle[];
 
-  // --- SavedModel (M3) ---
+  // --- sessions: SavedModel (M3) and graphs built for gradients (M4) ---
   /** Loads a SavedModel, returning its session handle and serialized MetaGraphDef. */
-  loadSavedModel(dir: string, tags: string[]): { handle: Model; metaGraphDef: Uint8Array };
+  loadSavedModel(dir: string, tags: string[]): { handle: Session; metaGraphDef: Uint8Array };
   /** Runs a session by graph tensor name; feeds and fetches are parallel arrays. */
-  runSavedModel(
-    model: Model,
+  sessionRun(
+    session: Session,
     inputOps: string[],
     inputIndices: number[],
     inputs: Handle[],
     outputOps: string[],
     outputIndices: number[],
   ): Handle[];
-  /** Closes the session and frees the graph. Idempotent. */
-  deleteSavedModel(model: Model): void;
+  /** Closes the session and frees its graph. Idempotent. */
+  sessionDelete(session: Session): void;
 
   // The rest of the surface (gradient / ...) is declared in docs/DESIGN.md §5
   // and added as milestones land.

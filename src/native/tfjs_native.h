@@ -24,14 +24,35 @@ HandleBox* UnwrapBox(const Napi::Value& value);
 // JS error on failure.
 TFE_Context* GetContext(Napi::Env env);
 
+// A session plus the graph it runs. Used by both SavedModel loading and graphs
+// built here for gradients, so they share one run/dispose implementation.
+struct SessionBox {
+  TF_Session* session;
+  TF_Graph* graph;
+};
+
+Napi::External<SessionBox> WrapSession(Napi::Env env, TF_Session* session, TF_Graph* graph);
+SessionBox* UnwrapSession(const Napi::Value& value);
+
+// Closes the session and frees the graph. Safe to call more than once.
+void FreeSession(SessionBox* box);
+
+// Resolves "opName" + output index into a TF_Output, throwing when absent.
+// Returns false if a JS error was thrown.
+bool ResolveOutput(Napi::Env env, TF_Graph* graph, const std::string& opName, int index,
+                   TF_Output* out);
+
 // Registers tensor <-> handle conversion functions on `exports`.
 void RegisterTensor(Napi::Env env, Napi::Object exports);
 
 // Registers eager execute / gradient / op-registry functions on `exports`.
 void RegisterExecute(Napi::Env env, Napi::Object exports);
 
-// Registers SavedModel load / run / dispose functions on `exports`.
+// Registers SavedModel loading on `exports`.
 void RegisterModel(Napi::Env env, Napi::Object exports);
+
+// Registers session run / dispose on `exports`.
+void RegisterSession(Napi::Env env, Napi::Object exports);
 
 // Throws a JS error carrying the TF_Status code+message when `status` is not OK.
 // Returns true when an error was thrown (caller should bail out).
