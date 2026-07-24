@@ -51,6 +51,13 @@ ensureLibraryPath(packageRoot);
 export type Ctx = { readonly __brand: "Ctx" };
 export type Handle = { readonly __brand: "Handle" };
 export type Session = { readonly __brand: "Session" };
+export type Graph = { readonly __brand: "Graph" };
+
+/** A graph tensor: one output of a named operation. */
+export interface Port {
+  op: string;
+  index: number;
+}
 
 /**
  * A single op attribute, tagged by its TF attr kind. `type`/`typeList` carry
@@ -108,6 +115,25 @@ export interface NativeBinding {
   ): Handle[];
   /** Closes the session and frees its graph. Idempotent. */
   sessionDelete(session: Session): void;
+
+  // --- graph construction (M4) ---
+  /** Creates an empty graph to replay recorded ops into. */
+  graphCreate(): Graph;
+  /** Adds a Placeholder. `shape` of null means unknown rank. */
+  graphPlaceholder(graph: Graph, name: string, dtype: number, shape: number[] | null): Port;
+  /** Bakes an eager tensor into the graph as a Const. */
+  graphConst(graph: Graph, name: string, handle: Handle): Port;
+  /** Adds an op. An input may be a Port, or a Port[] for a list-typed argument. */
+  graphAddOp(
+    graph: Graph,
+    opType: string,
+    name: string,
+    inputs: (Port | Port[])[],
+    attrs: AttrMap,
+    numOutputs: number,
+  ): Port[];
+  /** Creates a session over the graph; the session takes ownership of it. */
+  graphNewSession(graph: Graph): Session;
 
   // The rest of the surface (gradient / ...) is declared in docs/DESIGN.md §5
   // and added as milestones land.

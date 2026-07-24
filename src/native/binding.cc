@@ -23,6 +23,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   RegisterExecute(env, exports);  // execute / getAllOps ...
   RegisterSession(env, exports);  // sessionRun / sessionDelete
   RegisterModel(env, exports);    // loadSavedModel
+  RegisterGraph(env, exports);    // graphCreate / graphAddOp / graphNewSession ...
   return exports;
 }
 

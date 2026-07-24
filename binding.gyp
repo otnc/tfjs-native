@@ -12,7 +12,8 @@
         "src/native/tensor.cc",
         "src/native/execute.cc",
         "src/native/session.cc",
-        "src/native/model.cc"
+        "src/native/model.cc",
+        "src/native/graph.cc"
       ],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",
