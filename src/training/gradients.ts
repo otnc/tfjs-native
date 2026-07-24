@@ -1,14 +1,15 @@
-// Gradients via record-and-replay (M4c).
+// Gradients via record-and-replay (M4c) with a reusable compiled graph (M4e).
 //
-// `fn` runs eagerly while a tape records every op. The recording is then rebuilt
-// as a TF_Graph — inputs we differentiate become placeholders, other leaves are
-// baked in as constants — and TF_AddGradients differentiates it. This reuses
-// TensorFlow's own gradient definitions instead of hand-writing them.
+// `fn` runs eagerly while a tape records every op. The recording is rebuilt as a
+// TF_Graph — inputs we differentiate become placeholders, other leaves are baked
+// in as constants — and TF_AddGradients differentiates it, reusing TensorFlow's
+// own gradient definitions. The compiled graph can be run again with new input
+// values without re-tracing, which is what makes a training loop cheap.
 
 import { DType, dtypeName } from "../backend/dtype.js";
-import { binding, type Port } from "../backend/native.js";
+import { binding, type Port, type Session } from "../backend/native.js";
 import { Tensor, tensorHandle } from "../tensor/tensor.js";
-import { type TapeEntry, withTape } from "./tape.js";
+import { withTape } from "./tape.js";
 
 export interface ValueAndGrads {
   /** The value `fn` returned. */
@@ -17,22 +18,39 @@ export interface ValueAndGrads {
   grads: Tensor[];
 }
 
+/** A traced loss graph plus a live session, runnable with fresh input values. */
+export interface CompiledGrads {
+  session: Session;
+  /** Placeholders for the differentiated inputs, in `xs` order. */
+  xPorts: Port[];
+  lossPort: Port;
+  /** Gradient outputs, in `xs` order. */
+  gradPorts: Port[];
+}
+
 function toTensor(handle: ReturnType<typeof binding.sessionRun>[number]): Tensor {
   return new Tensor(handle, binding.handleShape(handle), dtypeName(binding.handleDtype(handle)));
 }
 
-function computeGrads(loss: Tensor, xs: Tensor[], entries: TapeEntry[]): Tensor[] {
+/** A cache key over the shapes/dtypes of the differentiated inputs. */
+export function gradSignature(xs: Tensor[]): string {
+  return xs.map((x) => `${x.dtype}[${x.shape.join(",")}]`).join(";");
+}
+
+/** Traces `fn`, rebuilds it as a graph, and returns a runnable compiled graph. */
+export function compileGrads(fn: () => Tensor, xs: Tensor[]): CompiledGrads {
+  const { result, entries, temporaries } = withTape(fn);
   const graph = binding.graphCreate();
   const ports = new WeakMap<Tensor, Port>();
   let counter = 0;
   const nextName = (prefix: string) => `${prefix}_${counter++}`;
 
-  // Inputs we differentiate become placeholders so their values are fed in.
-  const feeds: { port: Port; tensor: Tensor }[] = [];
+  // Differentiated inputs become placeholders so values are fed in each run.
+  const xPorts: Port[] = [];
   for (const x of xs) {
     const port = binding.graphPlaceholder(graph, nextName("x"), DType[x.dtype], [...x.shape]);
     ports.set(x, port);
-    feeds.push({ port, tensor: x });
+    xPorts.push(port);
   }
 
   // Any other leaf is a constant of the traced computation; bake its value in.
@@ -59,60 +77,74 @@ function computeGrads(loss: Tensor, xs: Tensor[], entries: TapeEntry[]): Tensor[
     });
   }
 
-  const lossPort = ports.get(loss);
+  const lossPort = ports.get(result);
   if (lossPort === undefined) {
     throw new Error(
       "tfjs-native: the value to differentiate was not produced by an op inside the function",
     );
   }
 
-  const xPorts = xs.map((x) => ports.get(x) as Port);
-
-  // TF_AddGradients has three outcomes for a requested input:
-  //   - a gradient node (normal),
-  //   - null, when the op is marked non-differentiable (REGISTER_NO_GRADIENT_OP),
-  //   - a thrown Status when the input is unreachable or an op has no gradient.
-  // All of "no usable gradient" should surface clearly, not as silent zeros.
-  let gradPorts: (Port | null)[];
+  // TF_AddGradients has three outcomes for a requested input: a gradient node; a
+  // null (op marked non-differentiable via REGISTER_NO_GRADIENT_OP); or a thrown
+  // Status (unreachable input, or an op with no gradient). Surface all failures.
+  let gradPortsRaw: (Port | null)[];
   try {
-    gradPorts = binding.graphAddGradients(graph, [lossPort], xPorts);
+    gradPortsRaw = binding.graphAddGradients(graph, [lossPort], xPorts);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(
       `tfjs-native: cannot compute a gradient — ${message}. Every differentiated input must affect the result through differentiable ops.`,
     );
   }
-  gradPorts.forEach((port, i) => {
+  const gradPorts = gradPortsRaw.map((port, i) => {
     if (port === null) {
       throw new Error(
         `tfjs-native: no gradient for input ${i}: the path to the result crosses a non-differentiable op`,
       );
     }
+    return port;
   });
 
   const session = binding.graphNewSession(graph);
-  try {
-    const handles = binding.sessionRun(
-      session,
-      feeds.map((f) => f.port.op),
-      feeds.map((f) => f.port.index),
-      feeds.map((f) => tensorHandle(f.tensor)),
-      gradPorts.map((p) => (p as Port).op),
-      gradPorts.map((p) => (p as Port).index),
-    );
-    return handles.map(toTensor);
-  } finally {
-    binding.sessionDelete(session);
+
+  // The eager tensors produced while tracing were only needed to record the
+  // structure and to bake constant values; free them now. Leaves (xs, external
+  // inputs) are left alone — they are owned by the caller.
+  for (const temporary of temporaries) temporary.dispose();
+  for (const entry of entries) {
+    for (const output of entry.outputs) output.dispose();
   }
+
+  return { session, xPorts, lossPort, gradPorts };
+}
+
+/** Runs a compiled graph with fresh input values, returning value and gradients. */
+export function runGrads(compiled: CompiledGrads, xs: Tensor[]): ValueAndGrads {
+  const fetch = [compiled.lossPort, ...compiled.gradPorts];
+  const handles = binding.sessionRun(
+    compiled.session,
+    compiled.xPorts.map((p) => p.op),
+    compiled.xPorts.map((p) => p.index),
+    xs.map(tensorHandle),
+    fetch.map((p) => p.op),
+    fetch.map((p) => p.index),
+  );
+  const tensors = handles.map(toTensor);
+  return { value: tensors[0] as Tensor, grads: tensors.slice(1) };
+}
+
+/** Frees a compiled graph's session. */
+export function disposeCompiled(compiled: CompiledGrads): void {
+  binding.sessionDelete(compiled.session);
 }
 
 /** Runs `fn`, returning both its value and the gradients w.r.t. `xs`. */
 export function valueAndGrads(fn: () => Tensor, xs: Tensor[]): ValueAndGrads {
-  const { result, entries, temporaries } = withTape(fn);
+  const compiled = compileGrads(fn, xs);
   try {
-    return { value: result, grads: computeGrads(result, xs, entries) };
+    return runGrads(compiled, xs);
   } finally {
-    for (const temporary of temporaries) temporary.dispose();
+    disposeCompiled(compiled);
   }
 }
 

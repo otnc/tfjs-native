@@ -8,18 +8,40 @@ import { add, div, mul, sqrt, square, sub } from "../ops/manual/elementwise.js";
 import { tidy } from "../tensor/engine.js";
 import { scalar, zeros } from "../tensor/factory.js";
 import type { Tensor } from "../tensor/tensor.js";
-import { valueAndGrads } from "./gradients.js";
+import {
+  type CompiledGrads,
+  compileGrads,
+  disposeCompiled,
+  gradSignature,
+  runGrads,
+} from "./gradients.js";
 import type { Variable } from "./variable.js";
 
 export abstract class Optimizer {
   protected step = 0;
+  // The loss graph is compiled once per (loss function, input signature) and
+  // reused across steps, so a training loop does not rebuild it every time.
+  readonly #cache = new WeakMap<() => Tensor, Map<string, CompiledGrads>>();
+  readonly #compiled = new Set<CompiledGrads>();
 
   /** Differentiates `fn` w.r.t. `vars`, applies the update, and returns the loss. */
   minimize(fn: () => Tensor, vars: Variable[]): Tensor {
-    const { value, grads } = valueAndGrads(
-      fn,
-      vars.map((v) => v.value),
-    );
+    const xs = vars.map((v) => v.value);
+    const signature = gradSignature(xs);
+
+    let bySignature = this.#cache.get(fn);
+    if (bySignature === undefined) {
+      bySignature = new Map();
+      this.#cache.set(fn, bySignature);
+    }
+    let compiled = bySignature.get(signature);
+    if (compiled === undefined) {
+      compiled = compileGrads(fn, xs);
+      bySignature.set(signature, compiled);
+      this.#compiled.add(compiled);
+    }
+
+    const { value, grads } = runGrads(compiled, xs);
     this.applyGradients(vars, grads);
     for (const g of grads) g.dispose();
     return value;
@@ -35,8 +57,15 @@ export abstract class Optimizer {
 
   protected abstract update(variable: Variable, grad: Tensor): void;
 
-  /** Frees any per-variable optimizer state. */
-  dispose(): void {}
+  /** Frees per-variable optimizer state. Overridden by each optimizer. */
+  protected disposeState(): void {}
+
+  /** Frees optimizer state and every compiled loss graph. */
+  dispose(): void {
+    this.disposeState();
+    for (const compiled of this.#compiled) disposeCompiled(compiled);
+    this.#compiled.clear();
+  }
 }
 
 class Sgd extends Optimizer {
@@ -68,7 +97,7 @@ class Sgd extends Optimizer {
     variable.assign(next);
   }
 
-  override dispose(): void {
+  override disposeState(): void {
     for (const v of this.#velocities.values()) v.dispose();
     this.#velocities.clear();
   }
@@ -117,7 +146,7 @@ class Adam extends Optimizer {
     variable.assign(next);
   }
 
-  override dispose(): void {
+  override disposeState(): void {
     for (const t of this.#m.values()) t.dispose();
     for (const t of this.#v.values()) t.dispose();
     this.#m.clear();
@@ -150,7 +179,7 @@ class RmsProp extends Optimizer {
     variable.assign(next);
   }
 
-  override dispose(): void {
+  override disposeState(): void {
     for (const t of this.#ms.values()) t.dispose();
     this.#ms.clear();
   }
