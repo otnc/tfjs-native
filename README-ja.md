@@ -78,7 +78,7 @@ addon は固定バージョンの libtensorflow（現在 2.10.0）をリンク�
 - [設計](./docs/ja/DESIGN.md) — アーキテクチャ・スコープ・ネイティブ契約。
 - [コントリビュート](./CONTRIBUTING-ja.md) — 開発環境（Bun、uv による Python、C++ ツールチェーン）とワークフロー。
 
-## Author
+## 著者
 
 otoneko. https://github.com/otnc
 
