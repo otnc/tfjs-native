@@ -61,7 +61,16 @@ fix(native): free TFE_TensorHandle on dtype mismatch
 ```
 
 - Breaking changes must carry `type(scope)!: ...` or a `BREAKING CHANGE:` footer.
-- One concern per commit. Keep generated output (`src/ops/generated/`) and hand-written changes in separate commits.
+
+### Commit granularity
+
+**Commit at a fine granularity — one concern per commit.** A commit should be reviewable on its own and describable in a single subject line without "and".
+
+- Split by concern, not by file: a dependency bump and a bug fix are two commits even when they touch the same file.
+- Keep generated output (`src/ops/generated/`) in its own commit, separate from hand-written changes.
+- Keep docs, CI, and source changes apart unless one is meaningless without the other.
+- Never bundle unrelated work into a "wip" or "misc" commit.
+- Push in the same small increments so CI reports on each step.
 
 ## Branches / PRs
 
