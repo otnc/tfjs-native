@@ -113,4 +113,26 @@ describe.skipIf(!nativeAvailable)("optimizers (native)", () => {
     w.dispose();
     b.dispose();
   }, 30000);
+
+  it("reuses one compiled graph across steps (fast loop)", async () => {
+    const { tensor } = await import("../tensor/factory.js");
+    const { square } = await import("../ops/manual/elementwise.js");
+    const { sum } = await import("../ops/manual/reduction.js");
+    const { variable } = await import("./variable.js");
+    const { sgd } = await import("./optimizer.js");
+
+    const w = variable(tensor([1, 2, 3, 4]));
+    const opt = sgd({ learningRate: 0.01 });
+    const loss = () => sum(square(w.value));
+
+    // Many steps must stay well under a graph-rebuild-per-step budget.
+    const start = performance.now();
+    for (let i = 0; i < 500; i++) opt.minimize(loss, [w]).dispose();
+    const elapsed = performance.now() - start;
+
+    expect(((await w.value.array()) as number[])[0]).toBeLessThan(1); // it trained
+    expect(elapsed).toBeLessThan(2000); // 500 steps without recompiling each time
+    opt.dispose();
+    w.dispose();
+  }, 30000);
 });
