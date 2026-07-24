@@ -14,8 +14,6 @@ TensorFlow (C++/Python) native wrapper for Node.js.
 
 Original: [tensorflow/tensorflow](https://github.com/tensorflow/tensorflow)
 
-> **Status: early development.** The tensor layer and native binding are in place (milestone M1); the API and op coverage are still growing. Not yet on npm.
-
 ## Requirements
 
 - **Node.js 22+**, on **Windows / Linux / macOS**.
@@ -74,6 +72,7 @@ The addon links a pinned libtensorflow (currently 2.10.0), is compiled per platf
 
 ## Documentation
 
+- [Status](./docs/STATUS.md) — what works today, by milestone.
 - [Functions & features](./docs/FUNCTIONS.md) — the current API and the roadmap.
 - [Design](./docs/DESIGN.md) — architecture, scope, and the native contract.
 - [Contributing](./CONTRIBUTING.md) — dev environment (Bun, Python via uv, C++ toolchain) and workflow.

@@ -14,8 +14,6 @@ Node.js 向けの TensorFlow（C++/Python）ネイティブ wrapper。
 
 Original: [tensorflow/tensorflow](https://github.com/tensorflow/tensorflow)
 
-> **ステータス: 開発初期。** テンソル層とネイティブバインディングは実装済み（マイルストーン M1）で、API と op カバレッジは拡張中です。npm 未公開。
-
 ## 動作要件
 
 - **Node.js 22 以上**（**Windows / Linux / macOS**）。
@@ -74,6 +72,7 @@ addon は固定バージョンの libtensorflow（現在 2.10.0）をリンク�
 
 ## ドキュメント
 
+- [ステータス](./docs/ja/STATUS.md) — マイルストーン別の現状。
 - [機能一覧](./docs/ja/FUNCTIONS.md) — 現在の API とロードマップ。
 - [設計](./docs/ja/DESIGN.md) — アーキテクチャ・スコープ・ネイティブ契約。
 - [コントリビュート](./CONTRIBUTING-ja.md) — 開発環境（Bun、uv による Python、C++ ツールチェーン）とワークフロー。
