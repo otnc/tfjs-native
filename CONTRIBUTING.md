@@ -8,17 +8,19 @@ All repo artifacts and communication are in **English** (see the language policy
 
 ## Prerequisites
 
-Working on the **pure-TS** parts only needs **Bun**. Building the **native addon** additionally needs Python, a C++ toolchain, and libtensorflow.
+Working on the **pure-TS** parts only needs **Bun**. Building the **native addon** additionally needs **uv**, a C++ toolchain, and libtensorflow.
 
 | Tool | Version | Why | Install |
 |---|---|---|---|
 | **Bun** | latest | package manager + runtime + test runner (do not pin its version) | <https://bun.sh> |
 | **Node.js** | >= 22 | ABI target for the prebuilt addon; also runs `node-gyp` | <https://nodejs.org> |
-| **Python** | 3.x (3.12 tested) | required by `node-gyp` to configure the build | via [uv](https://docs.astral.sh/uv/getting-started/installation/) (below) |
+| **uv** | latest, **on PATH** | resolves the Python `node-gyp` needs, and runs `clang-format` for `check:cpp`/`format:cpp` | <https://docs.astral.sh/uv/getting-started/installation/> |
 | **C++ toolchain** | per-OS | compiles the N-API addon | see [below](#c-toolchain-per-os) |
 | **libtensorflow** | 2.10.0 (default) | the native C library the addon links | fetched automatically |
 
-### Python via uv (recommended)
+uv is a hard prerequisite: `bun run build:native`/`bun run setup` shell out to bare `uv`, and `bun run check:cpp`/`format:cpp` shell out to bare `uvx`, assuming both resolve via PATH — the official installer adds them there by default. If you installed uv somewhere it doesn't put on PATH, add its `bin` directory to PATH yourself (Windows: `[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";<dir>", "User")`, then open a new shell).
+
+### Python via uv
 
 ```sh
 # install uv (official installer), then a managed CPython:
@@ -28,7 +30,7 @@ uv python find 3.12  # prints the python.exe / python path
 
 The interpreter version is pinned in `.python-version`. There is **no `uv.lock`**: the project has no Python dependencies — uv only provides a CPython for `node-gyp`.
 
-Point `node-gyp` at it when building the addon:
+`bun run build:native` (and `bun run setup`) resolve this Python automatically via `scripts/lib/python.mjs` — no manual `PYTHON` export needed. To do it yourself instead:
 
 ```sh
 # Windows (PowerShell)
@@ -73,7 +75,7 @@ The equivalent manual steps, if you prefer to run them yourself:
 ```sh
 TFJS_NATIVE_SKIP_INSTALL=1 bun install
 node scripts/install.mjs
-PYTHON="$(uv python find)" bun run build:native
+bun run build:native   # resolves Python via uv on its own; set PYTHON yourself to override
 ```
 
 ## Everyday commands

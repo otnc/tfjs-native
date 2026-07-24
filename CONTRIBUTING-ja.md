@@ -8,17 +8,19 @@
 
 ## 前提環境・前提ツール
 
-**純粋 TS** の部分だけなら **Bun** だけで作業できます。**ネイティブ addon** をビルドする場合は追加で Python・C++ ツールチェーン・libtensorflow が必要です。
+**純粋 TS** の部分だけなら **Bun** だけで作業できます。**ネイティブ addon** をビルドする場合は追加で **uv**・C++ ツールチェーン・libtensorflow が必要です。
 
 | ツール | バージョン | 用途 | 入手 |
 |---|---|---|---|
 | **Bun** | 最新 | パッケージマネージャ＋ランタイム＋テストランナー（バージョン固定しない） | <https://bun.sh> |
 | **Node.js** | 22 以上 | prebuild addon の ABI ターゲット。`node-gyp` の実行にも使用 | <https://nodejs.org> |
-| **Python** | 3.x（3.12 で確認） | `node-gyp` がビルド構成に必要 | [uv](https://docs.astral.sh/uv/getting-started/installation/) 経由（下記） |
+| **uv** | 最新、**PATH に通す** | `node-gyp` が必要とする Python を解決し、`check:cpp`/`format:cpp` の `clang-format` 実行にも使用 | <https://docs.astral.sh/uv/getting-started/installation/> |
 | **C++ ツールチェーン** | OS 別 | N-API addon のコンパイル | [下記](#os-別-c-ツールチェーン) |
 | **libtensorflow** | 2.10.0（既定） | addon がリンクするネイティブ C ライブラリ | 自動取得 |
 
-### uv による Python（推奨）
+uv は必須の前提ツールです。`bun run build:native`/`bun run setup` は素の `uv` を、`bun run check:cpp`/`format:cpp` は素の `uvx` を、いずれも **PATH 解決前提**で呼び出します。公式インストーラなら既定で PATH に追加されます。カスタムな場所に入れて PATH に無い場合は、その `bin` ディレクトリを自分で PATH に追加してください（Windows: `[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";<dir>", "User")` の後、新しいシェルを開く）。
+
+### uv による Python
 
 ```sh
 # uv（公式インストーラ）を入れてから、管理下の CPython を導入:
@@ -28,7 +30,7 @@ uv python find 3.12  # python.exe / python のパスを表示
 
 インタプリタのバージョンは `.python-version` に固定しています。**`uv.lock` はありません**。本プロジェクトに Python 依存は無く、uv は `node-gyp` 用の CPython を用意するだけだからです。
 
-addon をビルドするとき `node-gyp` にそのパスを渡します:
+`bun run build:native`（および `bun run setup`）は `scripts/lib/python.mjs` 経由でこの Python を自動解決します。手動で `PYTHON` を export する必要はありません。自分で行いたい場合:
 
 ```sh
 # Windows (PowerShell)
@@ -73,7 +75,7 @@ bun run setup
 ```sh
 TFJS_NATIVE_SKIP_INSTALL=1 bun install
 node scripts/install.mjs
-PYTHON="$(uv python find)" bun run build:native
+bun run build:native   # uv 経由で Python を自動解決。上書きしたい場合は自分で PYTHON を設定
 ```
 
 ## 日常コマンド
