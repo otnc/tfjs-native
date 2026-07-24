@@ -52,7 +52,7 @@
     "setup": "node scripts/setup.mjs",
     "build": "tsdown",
     "build:native": "node scripts/build-native.mjs",
-    "prebuildify": "prebuildify --napi --strip",
+    "prebuildify": "node scripts/prebuildify.mjs",
     "codegen": "node scripts/codegen/index.mjs",
     "install": "node scripts/install.mjs",
     "test": "bun test",
