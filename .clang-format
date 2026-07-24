@@ -1,0 +1,7 @@
+# C++ formatting for the N-API addon (src/native/*.cc, *.h).
+# Google base to match node-addon-api examples, widened to the repo's line width.
+BasedOnStyle: Google
+ColumnLimit: 100
+IndentWidth: 2
+DerivePointerAlignment: false
+PointerAlignment: Left

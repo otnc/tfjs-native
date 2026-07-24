@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+build/
+prebuilds/
+
+# native deps (downloaded libtensorflow)
+deps/
+
+# Note: src/ops/generated/ IS committed (a build artifact that ships in dist and
+# must be present for typecheck/build without running codegen). Regenerate with
+# `bun run codegen` when bumping libtensorflow.
+
+# misc
+*.log
+.DS_Store
+coverage/
+
+# Private
+.private/

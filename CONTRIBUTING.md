@@ -1,0 +1,140 @@
+# Contributing to tfjs-native
+
+**English** | [日本語](./CONTRIBUTING-ja.md)
+
+Thanks for your interest! This guide covers the developer setup and workflow. For the project design read [docs/DESIGN.md](./docs/DESIGN.md); for the mandatory conventions (commits, language, release) read [docs/RULES.md](./docs/RULES.md).
+
+All repo artifacts and communication are in **English** (see the language policy in [docs/RULES.md](./docs/RULES.md)). Japanese localizations are separate files (`README-ja.md`, `docs/ja/*`).
+
+## Prerequisites
+
+Working on the **pure-TS** parts only needs **Bun**. Building the **native addon** additionally needs **uv**, a C++ toolchain, and libtensorflow.
+
+| Tool | Version | Why | Install |
+|---|---|---|---|
+| **Bun** | latest | package manager + runtime + test runner (do not pin its version) | <https://bun.sh> |
+| **Node.js** | >= 22 | ABI target for the prebuilt addon; also runs `node-gyp` | <https://nodejs.org> |
+| **uv** | latest, **on PATH** | resolves the Python `node-gyp` needs, and runs `clang-format` for `check:cpp`/`format:cpp` | <https://docs.astral.sh/uv/getting-started/installation/> |
+| **C++ toolchain** | per-OS | compiles the N-API addon | see [below](#c-toolchain-per-os) |
+| **libtensorflow** | 2.10.0 (default) | the native C library the addon links | fetched automatically |
+
+uv is a hard prerequisite: `bun run build:native`/`bun run setup` shell out to bare `uv`, and `bun run check:cpp`/`format:cpp` shell out to bare `uvx`, assuming both resolve via PATH — the official installer adds them there by default. If you installed uv somewhere it doesn't put on PATH, add its `bin` directory to PATH yourself (Windows: `[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";<dir>", "User")`, then open a new shell).
+
+### Python via uv
+
+```sh
+# install uv (official installer), then a managed CPython:
+uv python install    # reads .python-version (3.12)
+uv python find 3.12  # prints the python.exe / python path
+```
+
+The interpreter version is pinned in `.python-version`. There is **no `uv.lock`**: the project has no Python dependencies — uv only provides a CPython for `node-gyp`.
+
+`bun run build:native` (and `bun run setup`) resolve this Python automatically via `scripts/lib/python.mjs` — no manual `PYTHON` export needed. To do it yourself instead:
+
+```sh
+# Windows (PowerShell)
+$env:PYTHON = (uv python find 3.12)
+# macOS / Linux
+export PYTHON="$(uv python find 3.12)"
+```
+
+### C++ toolchain per OS
+
+- **Windows**: Visual Studio Build Tools 2022 with the *Desktop development with C++* workload (provides MSVC + the Windows SDK, which `node-gyp` drives via MSBuild).
+- **Linux**: `build-essential` (gcc/g++, make).
+- **macOS**: Xcode Command Line Tools (`xcode-select --install`).
+
+### libtensorflow
+
+`scripts/install.mjs` downloads the official C library for your platform to `deps/libtensorflow/`. To fetch it explicitly:
+
+```sh
+node scripts/install.mjs
+```
+
+Overrides:
+
+- `LIBTENSORFLOW_ROOT` — use an existing install (must contain `include/` and `lib/`). Required on **macOS arm64** (`brew install libtensorflow`), which the official bucket does not provide.
+- `TFJS_NATIVE_CDN_STORAGE` — mirror base URL.
+- `TFJS_NATIVE_LIBTENSORFLOW_VERSION` — pin a different version.
+- `TFJS_NATIVE_SKIP_INSTALL=1` — skip the fetch entirely.
+
+## Setup
+
+One command does everything — installs JS dependencies, resolves the pinned Python through uv, fetches libtensorflow, builds the native addon, and verifies it loads:
+
+```sh
+bun run setup
+```
+
+It is safe to re-run. **Windows needs no `PATH` setup**: the addon loader prepends the fetched `deps/libtensorflow/lib` before loading, and the setup script verifies that end to end.
+
+The equivalent manual steps, if you prefer to run them yourself:
+
+```sh
+TFJS_NATIVE_SKIP_INSTALL=1 bun install
+node scripts/install.mjs
+bun run build:native   # resolves Python via uv on its own; set PYTHON yourself to override
+```
+
+## Everyday commands
+
+```sh
+bun run build       # tsdown: TS -> dist (ESM + CJS + d.ts)
+bun run build:native# node-gyp rebuild (local addon)
+bun run prebuildify # build a prebuilt binary for the current OS/arch
+bun run codegen     # regenerate op wrappers from the TF op registry
+bun test            # run tests (bun:test)
+bun run typecheck   # tsc --noEmit
+bun run lint        # biome lint only (no format check)
+bun run check       # biome lint + format check (src/, scripts/, root configs)
+bun run check:cpp   # clang-format check (src/native) — runs clang-format via uvx
+bun run check:all   # check + check:cpp (everything)
+bun run format      # biome format --write (src/, scripts/, root configs)
+bun run format:cpp  # clang-format -i (src/native)
+bun run format:all  # format + format:cpp
+```
+
+`check`/`lint` (biome) cover all JS/TS/JSON under `src/`, `scripts/`, and the root configs; `check:cpp` covers the C++ addon with a pinned `clang-format` (config in `.clang-format`, run via `uvx` — no separate install). `check:all` runs both. CI runs biome on every OS and the C++ check on Linux.
+
+Tests that need the compiled addon are **skip-guarded**: they run automatically once `bun run build:native` has produced the addon, and are skipped otherwise, so `bun test` stays green without a native build.
+
+## Adding a platform / bumping libtensorflow
+
+Checksums are pinned in `scripts/install.mjs`. To add one:
+
+1. Set `TFJS_NATIVE_LIBTENSORFLOW_VERSION` (and platform, if cross-fetching) and run `node scripts/install.mjs`.
+2. The installer prints `sha256(<artifact>) = <hash>` for unpinned artifacts.
+3. Add that entry to the `CHECKSUMS` map and commit.
+
+Bumping the default version follows the **libtensorflow Version Policy** in [docs/RULES.md](./docs/RULES.md) (how it maps to a tfjs-native version bump).
+
+## Regenerating op wrappers
+
+Op wrappers under `src/ops/generated/` are produced by `scripts/codegen/` from the runtime op registry (`TF_GetAllOpList`). **Do not hand-edit generated files** — change the generator/template and run `bun run codegen`.
+
+## Regenerating test fixtures
+
+The SavedModel tests use a tiny fixture in `test/fixtures/times_two` (y = x * 2). TensorFlow's Python package is needed only to *produce* it — tfjs-native never depends on it. Use Python 3.12 (TensorFlow has no 3.13/3.14 wheels):
+
+```sh
+uv venv --python 3.12 .venv-tf
+uv pip install --python .venv-tf tensorflow-cpu
+.venv-tf/Scripts/python scripts/fixtures/make_saved_model.py   # Windows
+.venv-tf/bin/python scripts/fixtures/make_saved_model.py       # macOS / Linux
+```
+
+Those tests skip automatically when the fixture or the native addon is missing.
+
+## Pull requests
+
+- Branch from `main` (`feat/…`, `fix/…`, `chore/…`); never push to `main` directly.
+- Commit messages follow **Conventional Commits**, in English (see [docs/RULES.md](./docs/RULES.md)). Example: `feat(ops): add scatterNd wrapper`.
+- CI must be green: native build (where applicable), `typecheck`, `biome`, `bun test`.
+- PRs that change the public API must include the reviewed `d.ts` impact.
+- Keep generated code and hand-written changes in separate commits.
+
+## Releasing (maintainers)
+
+Releases run `.github/workflows/release.yml`, triggered manually (`workflow_dispatch`) with a version input (a semver bump like `patch`, or an explicit `0.0.1`). It builds a prebuild on each OS, aggregates them, bumps the version, publishes to npm via **trusted publishing (OIDC)** — no `NPM_TOKEN` — then commits, tags `v<semver>`, and creates the GitHub Release. The npm package must be registered as a trusted publisher for this repo and workflow on npmjs.com before the first release.

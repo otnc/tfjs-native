@@ -1,0 +1,32 @@
+// Minimal subset of tensorflow/core/framework/op_def.proto — just the fields
+// codegen needs. Field NUMBERS must match upstream; unknown fields are skipped
+// by protobufjs on decode, so we do not vendor the full proto chain.
+
+syntax = "proto3";
+
+package tensorflow;
+
+message OpList {
+  repeated OpDef op = 1;
+}
+
+message OpDef {
+  string name = 1;
+  repeated ArgDef input_arg = 2;
+  repeated ArgDef output_arg = 3;
+  repeated AttrDef attr = 4;
+
+  message ArgDef {
+    string name = 1;
+    int32 type = 3; // DataType enum (0 when unset; then type_attr/type_list_attr apply)
+    string type_attr = 4;
+    string number_attr = 5;
+    string type_list_attr = 6;
+  }
+
+  message AttrDef {
+    string name = 1;
+    string type = 2;
+    bytes default_value = 3; // presence => the attr is optional (has a default)
+  }
+}

@@ -1,0 +1,135 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release: a semver bump (patch/minor/major/prerelease) or an explicit version (e.g. 0.0.1)"
+        required: true
+        default: patch
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  # Build the native addon on every target OS first: a partial prebuild set must
+  # never be published. macos-15-intel because the official libtensorflow C
+  # library has no arm64 build.
+  prebuild:
+    name: prebuild (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, macos-15-intel, windows-latest]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+
+      # node-gyp needs a real Node and a Python.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version-file: .python-version
+
+      - run: bun install --frozen-lockfile
+        env:
+          TFJS_NATIVE_SKIP_INSTALL: "1"
+
+      - name: Fetch libtensorflow
+        run: node scripts/install.mjs
+
+      - name: Build prebuild
+        run: bun run prebuildify
+
+      - name: Smoke-test the prebuild
+        run: bun test
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: prebuilds-${{ matrix.os }}
+          path: prebuilds/
+          if-no-files-found: error
+
+  # Aggregate prebuilds, bump the version, and publish to npm via trusted
+  # publishing (OIDC). No NPM_TOKEN — the repo must be registered as a trusted
+  # publisher for this package + workflow on npmjs.com before the first release.
+  release:
+    name: release
+    needs: prebuild
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the version commit/tag and create the GitHub Release
+      id-token: write # npm provenance
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+
+      # Node + npm are needed for trusted publishing (bun publish has no OIDC yet).
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - run: bun install --frozen-lockfile
+        env:
+          TFJS_NATIVE_SKIP_INSTALL: "1"
+
+      # Verify before publishing; the prebuild job already validated the addon.
+      - run: bun run check
+      - run: bun run typecheck
+      - run: bun test
+      - run: bun run build
+
+      - name: Collect prebuilds
+        uses: actions/download-artifact@v8
+        with:
+          pattern: prebuilds-*
+          path: prebuilds
+          merge-multiple: true
+
+      - name: Bump version
+        id: bump
+        run: |
+          OLD="$(node -p "require('./package.json').version")"
+          npm version "${{ inputs.version }}" --no-git-tag-version --allow-same-version >/dev/null
+          NEW="$(node -p "require('./package.json').version")"
+          echo "version=v${NEW}" >> "$GITHUB_OUTPUT"
+          if [ "$OLD" = "$NEW" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Version is already ${NEW}; skipping the bump commit but still releasing."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # bun has no OIDC exchange, so publish uses npm directly.
+      - run: npm install -g npm@11
+      - run: npm publish --access public --provenance
+
+      - name: Commit, tag and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ "${{ steps.bump.outputs.changed }}" = "true" ]; then
+            git commit -am "release: ${{ steps.bump.outputs.version }}"
+          fi
+          if ! git rev-parse -q --verify "refs/tags/${{ steps.bump.outputs.version }}" >/dev/null; then
+            git tag "${{ steps.bump.outputs.version }}"
+          fi
+          git push origin HEAD "${{ steps.bump.outputs.version }}"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ steps.bump.outputs.version }}" --title "${{ steps.bump.outputs.version }}" --generate-notes
