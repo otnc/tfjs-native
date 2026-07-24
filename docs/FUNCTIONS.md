@@ -80,11 +80,41 @@ console.log(await y.array());
 model.dispose();
 ```
 
+### Training (M4)
+
+Automatic differentiation and optimizers. Gradients use record-and-replay: the loss runs eagerly while a tape records it, then it is rebuilt as a graph so TensorFlow's own gradient definitions apply (140 ops have gradients in 2.10).
+
+| API | Description |
+|---|---|
+| `grads(fn, xs): Tensor[]` | Gradients of `fn()`'s result w.r.t. the tensors `xs`. |
+| `valueAndGrads(fn, xs)` | The same, plus `fn`'s value. |
+| `variable(initial, name?): Variable` | A trainable, mutable tensor holder (`.value`, `.assign`, `.dispose`). |
+| `sgd({ learningRate, momentum? })` | SGD optimizer. |
+| `adam({ learningRate?, beta1?, beta2?, epsilon? })` | Adam optimizer. |
+| `rmsprop({ learningRate?, decay?, epsilon? })` | RMSProp optimizer. |
+| `optimizer.minimize(fn, vars): Tensor` | One training step; returns the loss. Caches the loss graph across steps. |
+
+```ts
+import { variable, sgd, tensor, mul, add, sub, mean, square } from "tfjs-native";
+
+const w = variable(tensor([0]));
+const b = variable(tensor([0]));
+const xs = tensor([0, 1, 2, 3]);
+const ys = tensor([2, 5, 8, 11]); // y = 3x + 2
+const opt = sgd({ learningRate: 0.05 });
+
+for (let i = 0; i < 400; i++) {
+  opt.minimize(() => mean(square(sub(add(mul(w.value, xs), b.value), ys))), [w, b]).dispose();
+}
+// w ≈ 3, b ≈ 2
+```
+
+A requested gradient that cannot exist is reported, not silently zeroed: an input that does not affect the result throws, and a path through a non-differentiable op (e.g. `floor`, `equal`) throws too.
+
 ## Planned
 
 | Milestone | Feature |
 |---|---|
-| **M4** | Thin training layer: GradientTape equivalent, `sgd`/`adam`/`rmsprop`, `minimize`. |
 | **M5** | Prebuilt binaries per OS, automatic libtensorflow fetch, trusted-publish releases. |
 
 ## Out of scope

@@ -189,7 +189,7 @@ export interface NativeBinding {
 
 短命な補助テンソル（リダクションの軸、reshape の shape）を作る op は `disposeTemporary` に渡し、テープ記録中はリプレイ後まで生存させる。
 
-Optimizer（`sgd` / `adam` / `rmsprop`、`minimize`）は **TS 側で eager op を使って実装**し、状態（moment・step）は `Tensor` として `Variable` ラッパ経由で更新する。**[M4d — 未実装]**
+Optimizer（`sgd` / `adam` / `rmsprop`、`minimize`）は **TS 側で eager op を使って実装**し、状態（moment・step）は `Tensor` として `Variable` ラッパ経由で更新する。`compileGrads`/`runGrads` でトレースと実行を分離し、`Optimizer.minimize` は損失グラフを (損失関数, 入力シグネチャ) 単位でキャッシュするため、学習ループは初回以降グラフを再構築しない。損失関数内で参照する変数以外のテンソルは初回トレース時に定数として焼き込まれる（フルバッチ前提）。shape が変わると再トレースする。
 
 ---
 
@@ -258,11 +258,11 @@ bun run format       # biome format --write
 ## 12. ロードマップ
 
 1. **M0 スケルトン**: addon が libtensorflow をロードし `version()` を返す smoke test。完了。
-2. **M1 Tensor**: dtype/shape、JS↔TF のデータ往復、`data()`/`dataSync()`/`array()`、および `tidy`。← 現在地。TS 層 + native C++ を実装し、純粋部はユニットテスト済み。ネイティブ round-trip テストは、libtensorflow に対して addon をビルドするまで skip 保護（M5 の install パス + C++ ツールチェーンが必要）。
+2. **M1 Tensor**: 完了。dtype/shape、JS↔TF のデータ往復、`data()`/`dataSync()`/`array()`、および `tidy`。
 3. **M2 Eager ops**: 完了。native `execute` + TFE_Context + 手書き op セット（M2a）に加え、protobufjs による `TF_GetAllOpList` から約 1,295 ラッパを生成（M2b）。生成ファイル（`src/ops/generated/index.ts`）はコミット済みで、libtensorflow 更新時に再生成する。
 4. **M3 SavedModel**: 完了。addon 側で `TF_LoadSessionFromSavedModel` + `TF_SessionRun` を実装し、signature は MetaGraphDef を自前の小さな protobuf リーダで解析（実行時依存をゼロのまま維持）。
-5. **M4 学習**: GradientTape 相当 + SGD/Adam + `minimize`。← 現在地
-6. **M5 配布**: prebuild マトリクス + libtensorflow 自動取得 + trusted publish。
+5. **M4 学習**: 完了。記録＋リプレイによる勾配（`grads`/`valueAndGrads`）、`Variable`、`sgd`/`adam`/`rmsprop`、損失グラフをキャッシュする `minimize`。§8 参照。
+6. **M5 配布**: prebuild マトリクス + libtensorflow 自動取得は CI で 3 プラットフォームとも緑。残るは npm への trusted-publish リリースのみ。← 現在地
 
 ## 13. 用語
 

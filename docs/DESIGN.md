@@ -189,7 +189,7 @@ The public C API has **no eager gradient tape** (verified: no `TFE_*Tape*` symbo
 
 Ops that build short-lived helper tensors (a reduction's axis tensor, a reshape's shape tensor) hand them to `disposeTemporary`, which keeps them alive until after a replay when a tape is recording.
 
-Optimizers (`sgd` / `adam` / `rmsprop`, `minimize`) are implemented **in TS with eager ops**; state (moments, step) is kept as `Tensor`s and updated through a `Variable` wrapper. **[M4d — pending]**
+Optimizers (`sgd` / `adam` / `rmsprop`, `minimize`) are implemented **in TS with eager ops**; state (moments, step) is kept as `Tensor`s and updated through a `Variable` wrapper. `compileGrads`/`runGrads` split tracing from execution, and `Optimizer.minimize` caches the compiled loss graph per (loss function, input signature), so a training loop rebuilds nothing after the first step. Non-variable tensors referenced inside the loss are captured as constants at that first trace (full-batch semantics); a shape change re-traces.
 
 ---
 
@@ -258,11 +258,11 @@ bun run format       # biome format --write
 ## 12. Roadmap
 
 1. **M0 skeleton**: the addon loads libtensorflow and returns `version()` as a smoke test. Done.
-2. **M1 Tensor**: dtype/shape, JS<->TF data round-trip, `data()`/`dataSync()`/`array()`, plus `tidy`. <- current. TS layer + native C++ landed and unit-tested (pure parts); the native round-trip test is skip-guarded until the addon is built against libtensorflow (needs the M5 install path + a C++ toolchain).
+2. **M1 Tensor**: done. dtype/shape, JS<->TF data round-trip, `data()`/`dataSync()`/`array()`, plus `tidy`.
 3. **M2 Eager ops**: done. Native `execute` + TFE_Context + a hand-written op set (M2a), plus ~1,295 wrappers generated from `TF_GetAllOpList` via protobufjs (M2b). The generated file (`src/ops/generated/index.ts`) is committed and regenerated on a libtensorflow bump.
 4. **M3 SavedModel**: done. `TF_LoadSessionFromSavedModel` + `TF_SessionRun` in the addon, with signatures parsed from the MetaGraphDef by a small hand-rolled protobuf reader (keeps runtime dependencies at zero extra).
-5. **M4 Training**: GradientTape equivalent + SGD/Adam + `minimize`. <- current
-6. **M5 Distribution**: prebuild matrix + automatic libtensorflow fetch + trusted publish.
+5. **M4 Training**: done. Record-and-replay gradients (`grads`/`valueAndGrads`), `Variable`, `sgd`/`adam`/`rmsprop`, and `minimize` with a cached loss graph. See §8.
+6. **M5 Distribution**: prebuild matrix + automatic libtensorflow fetch built and green on CI for all three platforms; the trusted-publish release to npm is the remaining step. <- current
 
 ## 13. Glossary
 

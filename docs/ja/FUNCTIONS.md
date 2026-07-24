@@ -80,11 +80,41 @@ console.log(await y.array());
 model.dispose();
 ```
 
+### 学習（M4）
+
+自動微分と optimizer。勾配は記録＋リプレイ方式: 損失を eager で実行しながらテープに記録し、グラフに再構築して TensorFlow 自身の勾配定義を適用します（2.10 では 140 op に勾配あり）。
+
+| API | 説明 |
+|---|---|
+| `grads(fn, xs): Tensor[]` | `fn()` の結果を `xs` で微分した勾配。 |
+| `valueAndGrads(fn, xs)` | 上に加えて `fn` の値も返す。 |
+| `variable(initial, name?): Variable` | 学習可能な可変テンソルの入れ物（`.value`, `.assign`, `.dispose`）。 |
+| `sgd({ learningRate, momentum? })` | SGD optimizer。 |
+| `adam({ learningRate?, beta1?, beta2?, epsilon? })` | Adam optimizer。 |
+| `rmsprop({ learningRate?, decay?, epsilon? })` | RMSProp optimizer。 |
+| `optimizer.minimize(fn, vars): Tensor` | 1 ステップ学習し損失を返す。損失グラフはステップ間でキャッシュ。 |
+
+```ts
+import { variable, sgd, tensor, mul, add, sub, mean, square } from "tfjs-native";
+
+const w = variable(tensor([0]));
+const b = variable(tensor([0]));
+const xs = tensor([0, 1, 2, 3]);
+const ys = tensor([2, 5, 8, 11]); // y = 3x + 2
+const opt = sgd({ learningRate: 0.05 });
+
+for (let i = 0; i < 400; i++) {
+  opt.minimize(() => mean(square(sub(add(mul(w.value, xs), b.value), ys))), [w, b]).dispose();
+}
+// w ≈ 3, b ≈ 2
+```
+
+取れない勾配は黙って 0 にせず報告します。結果に影響しない入力は例外になり、微分不能な op（`floor`, `equal` など）を通る経路も例外になります。
+
 ## 今後の予定
 
 | マイルストーン | 機能 |
 |---|---|
-| **M4** | 薄い学習レイヤ: GradientTape 相当、`sgd`/`adam`/`rmsprop`、`minimize`。 |
 | **M5** | OS 別 prebuild、libtensorflow の自動取得、trusted publishing リリース。 |
 
 ## 対象外
