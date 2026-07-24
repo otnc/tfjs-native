@@ -56,10 +56,10 @@
     "typecheck": "tsc --noEmit",
     "lint": "biome lint .",
     "check": "biome check .",
-    "check:cpp": "uvx clang-format@22.1.8 --dry-run --Werror src/native/*.cc src/native/*.h",
+    "check:cpp": "node scripts/clang-format.mjs --check",
     "check:all": "bun run check && bun run check:cpp",
     "format": "biome format --write .",
-    "format:cpp": "uvx clang-format@22.1.8 -i src/native/*.cc src/native/*.h",
+    "format:cpp": "node scripts/clang-format.mjs --write",
     "format:all": "bun run format && bun run format:cpp"
   },
   "dependencies": {
