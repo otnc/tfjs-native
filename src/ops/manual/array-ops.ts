@@ -4,6 +4,7 @@
 import { DType, type DTypeName } from "../../backend/dtype.js";
 import { tensor } from "../../tensor/factory.js";
 import type { Tensor } from "../../tensor/tensor.js";
+import { disposeTemporary } from "../../training/tape.js";
 import { dtypeAttr, runOp1, typeAttr } from "../run.js";
 
 /** Reshapes `x` to `shape` (same element count). */
@@ -15,7 +16,7 @@ export function reshape(x: Tensor, shape: number[]): Tensor {
       Tshape: dtypeAttr("int32"),
     });
   } finally {
-    shapeTensor.dispose();
+    disposeTemporary(shapeTensor);
   }
 }
 
@@ -29,7 +30,7 @@ export function transpose(x: Tensor, perm?: number[]): Tensor {
       Tperm: dtypeAttr("int32"),
     });
   } finally {
-    permTensor.dispose();
+    disposeTemporary(permTensor);
   }
 }
 

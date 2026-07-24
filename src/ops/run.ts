@@ -5,13 +5,18 @@ import { DType, type DTypeName, dtypeName } from "../backend/dtype.js";
 import type { Attr, AttrMap } from "../backend/native.js";
 import { binding } from "../backend/native.js";
 import { Tensor, tensorHandle } from "../tensor/tensor.js";
+import { record } from "../training/tape.js";
 
 /** Runs an op and returns all of its outputs as Tensors. */
 export function runOp(name: string, inputs: Tensor[], attrs: AttrMap, numOutputs = 1): Tensor[] {
   const handles = binding.execute(name, inputs.map(tensorHandle), attrs, numOutputs);
-  return handles.map(
+  const outputs = handles.map(
     (h) => new Tensor(h, binding.handleShape(h), dtypeName(binding.handleDtype(h))),
   );
+  // Every op funnels through here, so a gradient tape sees all of them without
+  // any per-op work. No-op unless a tape is recording.
+  record({ op: name, attrs, inputs, outputs });
+  return outputs;
 }
 
 /** Runs a single-output op and returns its one Tensor. */

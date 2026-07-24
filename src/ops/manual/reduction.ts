@@ -3,6 +3,7 @@
 
 import { tensor } from "../../tensor/factory.js";
 import type { Tensor } from "../../tensor/tensor.js";
+import { disposeTemporary } from "../../training/tape.js";
 import { dtypeAttr, runOp1, typeAttr } from "../run.js";
 
 function allAxes(rank: number): number[] {
@@ -24,7 +25,7 @@ function reduce(
       keep_dims: { type: "bool", value: keepDims },
     });
   } finally {
-    axesTensor.dispose();
+    disposeTemporary(axesTensor);
   }
 }
 
