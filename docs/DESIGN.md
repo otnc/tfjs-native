@@ -262,7 +262,7 @@ bun run format       # biome format --write
 3. **M2 Eager ops**: done. Native `execute` + TFE_Context + a hand-written op set (M2a), plus ~1,295 wrappers generated from `TF_GetAllOpList` via protobufjs (M2b). The generated file (`src/ops/generated/index.ts`) is committed and regenerated on a libtensorflow bump.
 4. **M3 SavedModel**: done. `TF_LoadSessionFromSavedModel` + `TF_SessionRun` in the addon, with signatures parsed from the MetaGraphDef by a small hand-rolled protobuf reader (keeps runtime dependencies at zero extra).
 5. **M4 Training**: done. Record-and-replay gradients (`grads`/`valueAndGrads`), `Variable`, `sgd`/`adam`/`rmsprop`, and `minimize` with a cached loss graph. See §8.
-6. **M5 Distribution**: prebuild matrix + automatic libtensorflow fetch built and green on CI for all three platforms; the trusted-publish release to npm is the remaining step. <- current
+6. **M5 Distribution**: done. Prebuild matrix + automatic libtensorflow fetch, green on CI for all three platforms, plus a manual-dispatch trusted-publish release workflow (see §11).
 
 ## 13. Glossary
 

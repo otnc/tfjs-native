@@ -2,9 +2,9 @@
 
 **English** | [日本語](./ja/FUNCTIONS.md)
 
-What the package exposes today and what is planned. Status reflects the milestone roadmap in [DESIGN.md](./DESIGN.md#12-roadmap). Signatures use TypeScript.
+What the package exposes today, organized by the milestone that introduced it (see the [roadmap](./DESIGN.md#12-roadmap)). Signatures use TypeScript.
 
-## Available now (M1)
+## Tensors (M1)
 
 ### Runtime
 
@@ -43,7 +43,7 @@ What the package exposes today and what is planned. Status reflects the mileston
 
 int64 is first-class here (via `BigInt64Array`), unlike `@tensorflow/tfjs`, which stops at int32.
 
-### Eager ops (M2)
+## Eager ops (M2)
 
 The eager execution path is live. **~1,295 ops are generated** from the TF op registry (`TF_GetAllOpList`) — including ops tfjs lacks, such as `scatterNd`, `gatherNd`, `nonMaxSuppressionV2`, `conv2D`, `softmax`. Generated wrappers have typed inputs (`Tensor` / `Tensor[]`) and a typed output count; type/size attributes are auto-derived from inputs, and the rest are passed via a generic options object (omit one to use the op's TF default).
 
@@ -58,7 +58,7 @@ A set of hand-written ops sits on top with friendlier signatures:
 | Shape / dtype | `reshape`, `transpose`, `cast` |
 | Escape hatch | `runOp(name, inputs, attrs, numOutputs)` — call any op by name |
 
-### SavedModel (M3)
+## SavedModel (M3)
 
 Load a TensorFlow SavedModel and run inference through its signatures. Feeds and fetches are keyed by the signature's own names, so you never touch raw graph tensor names.
 
@@ -80,7 +80,7 @@ console.log(await y.array());
 model.dispose();
 ```
 
-### Training (M4)
+## Training (M4)
 
 Automatic differentiation and optimizers. Gradients use record-and-replay: the loss runs eagerly while a tape records it, then it is rebuilt as a graph so TensorFlow's own gradient definitions apply (140 ops have gradients in 2.10).
 
@@ -110,12 +110,6 @@ for (let i = 0; i < 400; i++) {
 ```
 
 A requested gradient that cannot exist is reported, not silently zeroed: an input that does not affect the result throws, and a path through a non-differentiable op (e.g. `floor`, `equal`) throws too.
-
-## Planned
-
-| Milestone | Feature |
-|---|---|
-| **M5** | Prebuilt binaries per OS, automatic libtensorflow fetch, trusted-publish releases. |
 
 ## Out of scope
 

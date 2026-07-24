@@ -262,7 +262,7 @@ bun run format       # biome format --write
 3. **M2 Eager ops**: 完了。native `execute` + TFE_Context + 手書き op セット（M2a）に加え、protobufjs による `TF_GetAllOpList` から約 1,295 ラッパを生成（M2b）。生成ファイル（`src/ops/generated/index.ts`）はコミット済みで、libtensorflow 更新時に再生成する。
 4. **M3 SavedModel**: 完了。addon 側で `TF_LoadSessionFromSavedModel` + `TF_SessionRun` を実装し、signature は MetaGraphDef を自前の小さな protobuf リーダで解析（実行時依存をゼロのまま維持）。
 5. **M4 学習**: 完了。記録＋リプレイによる勾配（`grads`/`valueAndGrads`）、`Variable`、`sgd`/`adam`/`rmsprop`、損失グラフをキャッシュする `minimize`。§8 参照。
-6. **M5 配布**: prebuild マトリクス + libtensorflow 自動取得は CI で 3 プラットフォームとも緑。残るは npm への trusted-publish リリースのみ。← 現在地
+6. **M5 配布**: 完了。prebuild マトリクス + libtensorflow 自動取得は CI で 3 プラットフォームとも緑。加えて手動起動の trusted-publish リリースワークフローも整備済み（§11 参照）。
 
 ## 13. 用語
 

@@ -2,9 +2,9 @@
 
 [English](../FUNCTIONS.md) | **日本語**
 
-現在提供している機能と今後の予定です。ステータスは [DESIGN.md](./DESIGN.md#12-ロードマップ) のロードマップに対応します。シグネチャは TypeScript です。
+現在提供している機能を、導入されたマイルストーン別にまとめています（[ロードマップ](./DESIGN.md#12-ロードマップ)参照）。シグネチャは TypeScript です。
 
-## 現在利用可能（M1）
+## テンソル（M1）
 
 ### ランタイム
 
@@ -43,7 +43,7 @@
 
 int64 を第一級で扱えます（`BigInt64Array` 経由）。int32 止まりの `@tensorflow/tfjs` との違いです。
 
-### eager op（M2）
+## eager op（M2）
 
 eager 実行パスは稼働済みです。**約 1,295 op** を TF の op registry（`TF_GetAllOpList`）から生成しています。tfjs に無い `scatterNd`・`gatherNd`・`nonMaxSuppressionV2`・`conv2D`・`softmax` なども含みます。生成ラッパは入力（`Tensor` / `Tensor[]`）と出力数が型付きで、型・サイズ属性は入力から自動導出し、それ以外は汎用 options で渡します（省略すると op の TF 既定値を使用）。
 
@@ -58,7 +58,7 @@ eager 実行パスは稼働済みです。**約 1,295 op** を TF の op registr
 | 形状 / dtype | `reshape`, `transpose`, `cast` |
 | エスケープハッチ | `runOp(name, inputs, attrs, numOutputs)` — 任意の op を名前で実行 |
 
-### SavedModel（M3）
+## SavedModel（M3）
 
 TensorFlow の SavedModel をロードし、signature 経由で推論を実行します。feed/fetch は signature 自身のキーで指定するので、生のグラフテンソル名を扱う必要はありません。
 
@@ -80,7 +80,7 @@ console.log(await y.array());
 model.dispose();
 ```
 
-### 学習（M4）
+## 学習（M4）
 
 自動微分と optimizer。勾配は記録＋リプレイ方式: 損失を eager で実行しながらテープに記録し、グラフに再構築して TensorFlow 自身の勾配定義を適用します（2.10 では 140 op に勾配あり）。
 
@@ -110,12 +110,6 @@ for (let i = 0; i < 400; i++) {
 ```
 
 取れない勾配は黙って 0 にせず報告します。結果に影響しない入力は例外になり、微分不能な op（`floor`, `equal` など）を通る経路も例外になります。
-
-## 今後の予定
-
-| マイルストーン | 機能 |
-|---|---|
-| **M5** | OS 別 prebuild、libtensorflow の自動取得、trusted publishing リリース。 |
 
 ## 対象外
 
