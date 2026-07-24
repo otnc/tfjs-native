@@ -44,4 +44,9 @@ function main() {
   });
 }
 
-main();
+try {
+  main();
+} catch (error) {
+  console.error(`prebuildify failed: ${error instanceof Error ? error.message : error}`);
+  process.exit(1);
+}
