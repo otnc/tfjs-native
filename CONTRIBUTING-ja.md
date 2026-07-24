@@ -60,18 +60,21 @@ node scripts/install.mjs
 
 ## セットアップ
 
+コマンド1つで完了します。JS 依存のインストール、uv による固定 Python の解決、libtensorflow の取得、ネイティブ addon のビルド、ロード確認までを行います:
+
 ```sh
-# libtensorflow の取得を発火させずに JS 依存を入れる
-TFJS_NATIVE_SKIP_INSTALL=1 bun install
-
-# プラットフォーム向けの libtensorflow を取得
-node scripts/install.mjs
-
-# ネイティブ addon をビルド（Python と C++ ツールチェーンが必要）
-PYTHON="$(uv python find 3.12)" bun run build:native
+bun run setup
 ```
 
-**Windows** では、addon ロード時に `tensorflow.dll` が解決できる必要があります。`deps/libtensorflow/lib` を `PATH` に追加するか、ビルドした `.node` の隣に `tensorflow.dll` をコピーしてください。
+再実行しても安全です。**Windows でも `PATH` の設定は不要**です。addon ローダが取得済みの `deps/libtensorflow/lib` を読み込み前に追加し、セットアップスクリプトがその動作まで検証します。
+
+手動で実行したい場合の同等の手順:
+
+```sh
+TFJS_NATIVE_SKIP_INSTALL=1 bun install
+node scripts/install.mjs
+PYTHON="$(uv python find)" bun run build:native
+```
 
 ## 日常コマンド
 

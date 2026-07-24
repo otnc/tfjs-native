@@ -60,18 +60,21 @@ Overrides:
 
 ## Setup
 
+One command does everything — installs JS dependencies, resolves the pinned Python through uv, fetches libtensorflow, builds the native addon, and verifies it loads:
+
 ```sh
-# install JS deps without triggering the libtensorflow fetch yet
-TFJS_NATIVE_SKIP_INSTALL=1 bun install
-
-# fetch libtensorflow for your platform
-node scripts/install.mjs
-
-# build the native addon (needs Python + the C++ toolchain)
-PYTHON="$(uv python find 3.12)" bun run build:native
+bun run setup
 ```
 
-On **Windows**, the runtime needs `tensorflow.dll` to be discoverable when the addon loads — add `deps/libtensorflow/lib` to `PATH`, or copy `tensorflow.dll` next to the built `.node`.
+It is safe to re-run. **Windows needs no `PATH` setup**: the addon loader prepends the fetched `deps/libtensorflow/lib` before loading, and the setup script verifies that end to end.
+
+The equivalent manual steps, if you prefer to run them yourself:
+
+```sh
+TFJS_NATIVE_SKIP_INSTALL=1 bun install
+node scripts/install.mjs
+PYTHON="$(uv python find)" bun run build:native
+```
 
 ## Everyday commands
 
