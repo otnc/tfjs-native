@@ -179,12 +179,17 @@ export interface NativeBinding {
 
 ## 8. 学習（training/）
 
-Python の optimizer / 勾配は C API に無いので、**TS 側で薄く実装**します。
+公開 C API に **eager の勾配テープは無い**（`TFE_*Tape*` シンボルが存在しないことを実測で確認）。勾配 API は `TF_Graph` に対する `TF_AddGradients` のみ。そこで勾配は **記録＋リプレイ**（`tf.function` 相当）で実装します。
 
-- `tape.ts`: `gradient(ys, xs)` を addon の勾配 API（`TFE_*` テープ）に委譲する。例: `tf.grad(f)` / `const {value, grads} = tape(() => loss, [w, b])`。
-- `optimizer.ts`: `Optimizer` 基底に `applyGradients(gradsAndVars)`。実装は `sgd` / `adam` / `rmsprop`。更新式は eager op（`assignSub` など）で表現し、状態（moment 等）は `Tensor` で保持する。
-- `minimize(lossFn, varList)`: テープで勾配を取り optimizer で適用、を 1 呼び出しにまとめる。
-- 一部の op には C API の勾配が無い場合がある（TF の既知の制約）。落ちる op は明示的にエラーにする。
+1. `tape.ts`: テープが有効な間、すべての op を記録する。記録は ops 層の `runOp` に相乗りさせるため、約 1,300 op すべてが op ごとの追加実装ゼロでトレース対象になる。テープが無いときは null チェック1つのみ。
+2. `gradients.ts`: 記録を `TF_Graph` に再構築する。微分対象の入力（`xs`）は Placeholder に、それ以外の葉は eager の値から Const として焼き込む。`TF_AddGradients` でグラフを微分し、**TF 自身の勾配定義**（2.10 で 140 op 登録済み）をそのまま使う（手書きしない）。
+3. セッションで forward と backward をまとめて実行し、結果は eager の `Tensor` で返る。公開 API は `grads(fn, xs)` と `valueAndGrads(fn, xs)`。
+
+`TF_AddGradients` の結果は3種類あり、すべて明示的に扱う: 勾配ノード（正常）、`REGISTER_NO_GRADIENT_OP` の op（44 個、例 `Floor`）は **null**、到達不能な入力や勾配未登録 op は **Status エラー**。「使える勾配が無い」場合は必ず表面化させ、黙って 0 にはしない。
+
+短命な補助テンソル（リダクションの軸、reshape の shape）を作る op は `disposeTemporary` に渡し、テープ記録中はリプレイ後まで生存させる。
+
+Optimizer（`sgd` / `adam` / `rmsprop`、`minimize`）は **TS 側で eager op を使って実装**し、状態（moment・step）は `Tensor` として `Variable` ラッパ経由で更新する。**[M4d — 未実装]**
 
 ---
 

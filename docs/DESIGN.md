@@ -179,12 +179,17 @@ export interface NativeBinding {
 
 ## 8. Training (training/)
 
-Python optimizers/gradients are not in the C API, so we implement them **thinly on the TS side**.
+The public C API has **no eager gradient tape** (verified: no `TFE_*Tape*` symbols exist). Its only gradient facility is `TF_AddGradients`, which works on a `TF_Graph`. So gradients use **record-and-replay** — like `tf.function`:
 
-- `tape.ts`: delegates `gradient(ys, xs)` to the addon's gradient API (`TFE_*` tape). Examples: `tf.grad(f)` / `const {value, grads} = tape(() => loss, [w, b])`.
-- `optimizer.ts`: an `Optimizer` base with `applyGradients(gradsAndVars)`; implementations `sgd` / `adam` / `rmsprop`. Update rules are expressed with eager ops (`assignSub` etc.), and state (moments etc.) is kept as `Tensor`s.
-- `minimize(lossFn, varList)`: gradients via the tape, then apply via the optimizer, in one call.
-- Some ops may have no C-API gradient (a known TF limitation). Ops that fail raise an explicit error.
+1. `tape.ts`: while a tape is active, every op is recorded. Recording piggybacks on `runOp` in the ops layer, so all ~1,300 ops are traced with no per-op work. It is a single null check when no tape is active.
+2. `gradients.ts`: the recording is rebuilt as a `TF_Graph`. Differentiated inputs (`xs`) become Placeholders; other leaves are baked in as Consts from their eager values. `TF_AddGradients` then differentiates the graph, reusing **TensorFlow's own gradient definitions** (140 registered ops in 2.10) instead of hand-written ones.
+3. A session runs forward + backward together; results come back as eager `Tensor`s. `grads(fn, xs)` and `valueAndGrads(fn, xs)` are the public entry points.
+
+`TF_AddGradients` has three outcomes, and all are handled explicitly: a gradient node (normal); **null** for an op marked `REGISTER_NO_GRADIENT_OP` (44 ops, e.g. `Floor`); and a **thrown Status** for an unreachable input or an op with no gradient at all. "No usable gradient" is always surfaced, never silently zeroed.
+
+Ops that build short-lived helper tensors (a reduction's axis tensor, a reshape's shape tensor) hand them to `disposeTemporary`, which keeps them alive until after a replay when a tape is recording.
+
+Optimizers (`sgd` / `adam` / `rmsprop`, `minimize`) are implemented **in TS with eager ops**; state (moments, step) is kept as `Tensor`s and updated through a `Variable` wrapper. **[M4d — pending]**
 
 ---
 
