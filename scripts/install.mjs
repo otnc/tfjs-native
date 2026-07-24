@@ -132,9 +132,12 @@ async function patchMissingHeaders(dest) {
       const text = readFileSync(join(includeRoot, rel), "utf8");
       for (const m of text.matchAll(/#include\s+"(tensorflow\/[^"]+\.h)"/g)) {
         const ref = m[1];
-        // .pb.h are generated protobuf headers (not in the source tree) and are
-        // not part of the plain C-API include chain the addon uses.
-        if (ref.endsWith(".pb.h") || skip.has(ref)) continue;
+        // Never fetchable, and never compiled in an open-source build:
+        //   *.pb.h            generated protobuf headers (not in the source tree)
+        //   platform/google/  Google-internal variants, gated behind PLATFORM_GOOGLE
+        if (ref.endsWith(".pb.h") || ref.includes("/platform/google/") || skip.has(ref)) {
+          continue;
+        }
         if (!existsSync(join(includeRoot, ref))) missing.add(ref);
       }
     }
