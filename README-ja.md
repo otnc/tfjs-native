@@ -8,7 +8,7 @@
 ![platform](https://img.shields.io/badge/platform-windows%20%7C%20linux%20%7C%20macos-lightgrey)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
 
-Node.js 向けの TensorFlow（C++）ネイティブ wrapper。
+Node.js 向けの TensorFlow（C++/Python）ネイティブ wrapper。
 
 `@tensorflow/tfjs` がマップする TF op は約 300 個ですが、オリジナルの op registry には 1,400 以上あります。**tfjs-native** は TensorFlow の **C API**（`@tensorflow/tfjs-node` も使うネイティブライブラリ）をバインドし、**全 op registry** を型付き TypeScript から使えるようにします。加えて SavedModel の実行と薄い学習レイヤも目標です。
 

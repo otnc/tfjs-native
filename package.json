@@ -1,7 +1,7 @@
 {
   "name": "tfjs-native",
   "version": "0.0.0",
-  "description": "TensorFlow (C++) native wrapper for Node.js — full op-registry coverage via the libtensorflow C API.",
+  "description": "TensorFlow (C++/Python) native wrapper for Node.js — full op-registry coverage via the libtensorflow C API.",
   "keywords": [
     "tensorflow",
     "tfjs",

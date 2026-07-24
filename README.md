@@ -8,7 +8,7 @@
 ![platform](https://img.shields.io/badge/platform-windows%20%7C%20linux%20%7C%20macos-lightgrey)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
 
-TensorFlow (C++) native wrapper for Node.js.
+TensorFlow (C++/Python) native wrapper for Node.js.
 
 `@tensorflow/tfjs` maps only ~300 of TensorFlow's ops; the original op registry has 1,400+. **tfjs-native** binds TensorFlow's **C API** (the native library `@tensorflow/tfjs-node` also uses) to expose the **full op registry** to typed TypeScript, plus SavedModel execution and a thin training layer.
 
