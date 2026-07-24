@@ -41,7 +41,9 @@
     "binding.gyp",
     "scripts/install.mjs",
     "docs",
-    "README-ja.md"
+    "README-ja.md",
+    "CONTRIBUTING.md",
+    "CONTRIBUTING-ja.md"
   ],
   "engines": {
     "node": ">=22"
