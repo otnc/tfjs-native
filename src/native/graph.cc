@@ -271,8 +271,7 @@ Napi::Value GraphAddGradients(const Napi::CallbackInfo& info) {
       out.Set(static_cast<uint32_t>(i), env.Null());
       continue;
     }
-    out.Set(static_cast<uint32_t>(i),
-            MakePort(env, TF_OperationName(dy[i].oper), dy[i].index));
+    out.Set(static_cast<uint32_t>(i), MakePort(env, TF_OperationName(dy[i].oper), dy[i].index));
   }
   return out;
 }
