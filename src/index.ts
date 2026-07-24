@@ -17,6 +17,8 @@ export { tidy } from "./tensor/engine.js";
 export { ones, scalar, tensor, zeros } from "./tensor/factory.js";
 export { Tensor } from "./tensor/tensor.js";
 export type { NestedList, TensorScalar, TensorValues } from "./tensor/types.js";
+export type { ValueAndGrads } from "./training/gradients.js";
+export { grads, valueAndGrads } from "./training/gradients.js";
 
 /** Returns the linked libtensorflow version (M0 smoke test). */
 export function version(): string {
