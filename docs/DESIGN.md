@@ -251,7 +251,7 @@ bun run format       # biome format --write
 ### CI / Release (operational details in RULES.md)
 
 - **CI**: `oven-sh/setup-bun` with a matrix (Linux/macOS/Windows) × bun. addon build (M5 onward) -> typecheck -> biome -> `bun test`.
-- **Release**: on tag `v*`, build prebuilds per OS, aggregate, then publish via **npm trusted publishing (OIDC, no token)**. Provenance is attached explicitly. Only the publish step uses the npm CLI (bun publish has no OIDC yet).
+- **Release**: manual `workflow_dispatch` with a version input builds prebuilds per OS, aggregates them, bumps the version, and publishes via **npm trusted publishing (OIDC, no token)**, then tags and creates the GitHub Release. Only the publish step uses the npm CLI (bun publish has no OIDC yet).
 
 ---
 

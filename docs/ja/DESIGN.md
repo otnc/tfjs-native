@@ -251,7 +251,7 @@ bun run format       # biome format --write
 ### CI / Release（運用の詳細は RULES.md）
 
 - **CI**: `oven-sh/setup-bun` で matrix（Linux/macOS/Windows）× bun。addon build（M5 以降）→ typecheck → biome → `bun test`。
-- **Release**: tag `v*` で各 OS の prebuild を生成・集約し、**npm trusted publishing（OIDC、token 無し）**で publish。provenance は明示付与。publish 手順のみ npm CLI を使う（bun publish は OIDC 未対応のため）。
+- **Release**: 手動 `workflow_dispatch`（version 入力）で各 OS の prebuild を生成・集約し、バージョンを上げて **npm trusted publishing（OIDC、token 無し）**で publish、その後タグ付けと GitHub Release 作成。publish 手順のみ npm CLI を使う（bun publish は OIDC 未対応のため）。
 
 ---
 

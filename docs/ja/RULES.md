@@ -82,7 +82,7 @@ fix(native): free TFE_TensorHandle on dtype mismatch
 ## バージョニング / リリース
 
 - tfjs-native 自身の公開 TS API に対して **SemVer**。
-- リリースは tag `v<semver>`（例 `v0.2.0`）の push で `release.yml` が実行。
+- リリースは `release.yml`（手動 `workflow_dispatch`、version 入力あり）で実行。バージョンを上げ、npm に publish し、その後コミット・`v<semver>` タグ付け・GitHub Release 作成を行う。
 - **npm trusted publishing（OIDC）のみ**。`NPM_TOKEN` をリポジトリに置かない・使わない。
 - CHANGELOG は Conventional Commits から生成（手書き追記可）。
 - publish 前に全 OS の prebuild を揃える（欠けたまま publish しない）。

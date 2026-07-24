@@ -82,7 +82,7 @@ fix(native): free TFE_TensorHandle on dtype mismatch
 ## Versioning / Release
 
 - **SemVer** over tfjs-native's own public TS API.
-- Releases fire on a pushed tag `v<semver>` (e.g. `v0.2.0`) via `release.yml`.
+- Releases run `release.yml` (manual `workflow_dispatch` with a version input). It bumps the version, publishes to npm, then commits, tags `v<semver>`, and creates the GitHub Release.
 - **npm trusted publishing (OIDC) only.** Do not store or use an `NPM_TOKEN` in the repo.
 - CHANGELOG is generated from Conventional Commits (manual additions allowed).
 - Assemble prebuilds for all OSes before publishing (never publish with some missing).

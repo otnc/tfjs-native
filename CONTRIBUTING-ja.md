@@ -135,4 +135,4 @@ fixture かネイティブ addon が無い場合、これらのテストは自�
 
 ## リリース（メンテナ向け）
 
-リリースは tag `v<semver>` の push で `.github/workflows/release.yml` が実行します。各 OS の prebuild をビルド・集約し、**trusted publishing（OIDC）** で npm に公開します（`NPM_TOKEN` 不使用）。タグ付け前に全プラットフォームの prebuild が揃っていることを確認してください。
+リリースは `.github/workflows/release.yml` を手動（`workflow_dispatch`）で起動します。version 入力（`patch` などの semver bump か、`0.0.1` のような明示指定）を渡すと、各 OS で prebuild をビルド・集約し、バージョンを上げて **trusted publishing（OIDC）** で npm に公開（`NPM_TOKEN` 不使用）、その後コミット・`v<semver>` タグ付け・GitHub Release 作成を行います。初回リリース前に、この npm パッケージを本リポジトリ＋ワークフローの trusted publisher として npmjs.com に登録しておく必要があります。

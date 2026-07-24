@@ -135,4 +135,4 @@ Those tests skip automatically when the fixture or the native addon is missing.
 
 ## Releasing (maintainers)
 
-Releases run on a pushed tag `v<semver>` via `.github/workflows/release.yml`: prebuilds are built per OS, aggregated, and published to npm via **trusted publishing (OIDC)** — no `NPM_TOKEN`. Ensure all platform prebuilds are present before tagging.
+Releases run `.github/workflows/release.yml`, triggered manually (`workflow_dispatch`) with a version input (a semver bump like `patch`, or an explicit `0.0.1`). It builds a prebuild on each OS, aggregates them, bumps the version, publishes to npm via **trusted publishing (OIDC)** — no `NPM_TOKEN` — then commits, tags `v<semver>`, and creates the GitHub Release. The npm package must be registered as a trusted publisher for this repo and workflow on npmjs.com before the first release.
