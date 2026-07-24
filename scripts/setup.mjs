@@ -1,5 +1,6 @@
-// One-command developer setup: installs JS deps, resolves a Python for node-gyp,
-// fetches libtensorflow, builds the native addon, and verifies it loads.
+// One-command developer setup: installs JS deps, fetches libtensorflow, builds
+// the native addon (via build-native.mjs, which resolves Python for node-gyp),
+// and verifies it loads.
 //
 //   bun run setup
 //
@@ -7,7 +8,7 @@
 // it also works before `bun install` has ever run.
 
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -57,34 +58,6 @@ function has(command) {
   return capture(command, ["--version"]) !== null;
 }
 
-/** Finds a Python for node-gyp, installing the pinned version through uv if possible. */
-function resolvePython() {
-  const fromEnv = process.env.PYTHON;
-  if (fromEnv !== undefined && existsSync(fromEnv)) {
-    console.log(`using PYTHON=${fromEnv}`);
-    return fromEnv;
-  }
-
-  const versionFile = join(root, ".python-version");
-  const version = existsSync(versionFile) ? readFileSync(versionFile, "utf8").trim() : undefined;
-
-  if (!has("uv")) {
-    console.log("uv not found — leaving Python discovery to node-gyp.");
-    console.log("If the build fails, install uv (https://docs.astral.sh/uv/) and re-run.");
-    return undefined;
-  }
-
-  // `uv python install` with no argument reads .python-version.
-  run("uv", ["python", "install"]);
-  const found = version !== undefined ? capture("uv", ["python", "find", version]) : null;
-  if (found === null) {
-    console.log("uv could not report a Python path — leaving discovery to node-gyp.");
-    return undefined;
-  }
-  console.log(`using ${found}`);
-  return found;
-}
-
 function main() {
   console.log("tfjs-native setup");
 
@@ -98,22 +71,13 @@ function main() {
     throw new Error("bun is required (https://bun.sh)");
   }
 
-  heading("Resolve Python for node-gyp");
-  const python = resolvePython();
-
   heading("Fetch libtensorflow");
   run("node", [join("scripts", "install.mjs")]);
 
   heading("Build the native addon");
-  const gyp = join("node_modules", "node-gyp", "bin", "node-gyp.js");
-  if (!existsSync(join(root, gyp))) {
-    throw new Error("node-gyp is missing — run `bun install` first");
-  }
-  // Spawn a real Node: this script may be running under Bun, and node-gyp
-  // targets the headers of whichever runtime launches it.
-  run("node", [gyp, "rebuild"], {
-    env: python !== undefined ? { PYTHON: python, npm_config_python: python } : {},
-  });
+  // Delegates to build-native.mjs, which resolves a Python for node-gyp via uv
+  // (see scripts/lib/python.mjs) so this works even with no usable system Python.
+  run("node", [join("scripts", "build-native.mjs")]);
 
   heading("Verify the addon loads");
   // Mirrors src/backend/native.ts: Windows has no rpath, so tensorflow.dll is
