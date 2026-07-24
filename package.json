@@ -8,7 +8,9 @@
     "machine-learning",
     "native",
     "n-api",
-    "libtensorflow"
+    "libtensorflow",
+    "ai",
+    "ai-tools"
   ],
   "license": "Apache-2.0",
   "author": "otoneko",
