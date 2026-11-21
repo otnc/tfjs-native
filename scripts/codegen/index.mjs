@@ -219,7 +219,16 @@ function renderOp(op) {
   return `export function ${camel(op.name)}(${params.join(", ")}): ${ret} {\n${body}\n}`;
 }
 
+// Windows has no rpath, so tensorflow.dll must be on PATH before the addon
+// loads (src/backend/native.ts does the same at runtime).
+function addLibraryPath() {
+  if (process.platform !== "win32") return;
+  const libRoot = process.env.LIBTENSORFLOW_ROOT ?? join(root, "deps", "libtensorflow");
+  process.env.PATH = `${join(libRoot, "lib")};${process.env.PATH ?? ""}`;
+}
+
 function main() {
+  addLibraryPath();
   let binding;
   try {
     binding = require("node-gyp-build")(root);
