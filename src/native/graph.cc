@@ -237,7 +237,7 @@ Napi::Value GraphAddOp(const Napi::CallbackInfo& info) {
 // graphAddGradients(graph, ys, xs) -> Port[]
 //
 // Adds d(sum(ys))/dx nodes for each x. Coverage comes from TensorFlow's C++
-// gradient registry (140 ops in 2.10), so an op without a registered gradient
+// gradient registry (143 ops in 2.15), so an op without a registered gradient
 // fails here — the Status message names it.
 Napi::Value GraphAddGradients(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();

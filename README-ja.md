@@ -68,7 +68,7 @@ a.dispose();
 TypeScript API  ->  N-API addon (node-addon-api)  ->  libtensorflow C API
 ```
 
-addon は固定バージョンの libtensorflow（現在 2.10.0）をリンクし、プラットフォームごとにコンパイルされ、`node-gyp-build` 経由で prebuild バイナリとして配布されます。
+addon は固定バージョンの libtensorflow(現在 2.15.0)をリンクし、プラットフォームごとにコンパイルされ、`node-gyp-build` 経由で prebuild バイナリとして配布されます。
 
 ## ドキュメント
 

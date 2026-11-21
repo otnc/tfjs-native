@@ -18,7 +18,7 @@ body:
     attributes:
       label: What version of libtensorflow are you using?
       description: The default pinned version, or the one set via TFJS_NATIVE_LIBTENSORFLOW_VERSION / LIBTENSORFLOW_ROOT.
-      placeholder: 2.10.0 (default)
+      placeholder: 2.15.0 (default)
     validations:
       required: true
   - type: input

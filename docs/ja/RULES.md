@@ -89,10 +89,10 @@ fix(native): free TFE_TensorHandle on dtype mismatch
 
 ## libtensorflow バージョンポリシー
 
-- 同梱する libtensorflow のバージョンは `scripts/install.mjs`（`VERSION`）に**固定**しています。現在は **2.10.0**。最新版ではなく、全プラットフォームでのヘッダ完全性で選んでいます（[DESIGN.md](./DESIGN.md) §10 参照）。
+- 同梱する libtensorflow のバージョンは `scripts/install.mjs`（`VERSION`）に**固定**しています。現在は **2.15.0** で、対応する全プラットフォームに公式の C ライブラリのアーカイブがある最新リリースです([DESIGN.md](./DESIGN.md) §10 参照)。
 - libtensorflow のバージョンと tfjs-native のバージョンは**独立**です。SemVer は tfjs-native 自身の TS API で判断し、どの libtensorflow をリンクするかでは判断しません。
 - **固定 libtensorflow の引き上げ**は影響で tfjs-native のバージョンに対応付けます: 追加のみ（op 追加・TS API 変更なし）→ **minor**; op の削除・改名や、利用者が依存し得る挙動変更 → **major**; 同一 libtensorflow での純粋な再ビルド → **patch**。
-- 引き上げ時は必ず `VERSION` を更新し、新しいアーカイブの checksum（`CHECKSUMS`）を追加し、リリースノートに libtensorflow のバージョンを明記する。
+- 引き上げ時は必ず `VERSION` を更新し、新しいアーカイブの checksum(`CHECKSUMS`)と、補完するヘッダの checksum(`HEADER_CHECKSUMS`)を追加し、op ラッパを再生成(`bun run codegen`)し、リリースノートに libtensorflow のバージョンを明記する。
 - 利用者は `TFJS_NATIVE_LIBTENSORFLOW_VERSION` でバージョンを上書きできますが、未固定のバージョンはベストエフォート（checksum 未検証・ヘッダ未検証）です。
 
 ## 開発環境ルール

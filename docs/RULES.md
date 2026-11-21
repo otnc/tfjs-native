@@ -89,10 +89,10 @@ fix(native): free TFE_TensorHandle on dtype mismatch
 
 ## libtensorflow Version Policy
 
-- The bundled libtensorflow version is **pinned** in `scripts/install.mjs` (`VERSION`), currently **2.10.0**. It is chosen for cross-platform header completeness (see [DESIGN.md](./DESIGN.md) §10), not for being the newest release.
+- The bundled libtensorflow version is **pinned** in `scripts/install.mjs` (`VERSION`), currently **2.15.0**, the newest release with official C-library archives on every supported platform (see [DESIGN.md](./DESIGN.md) §10).
 - The libtensorflow version is **independent** of the tfjs-native version; SemVer is judged on tfjs-native's own TS API, not on which libtensorflow it links.
 - **Bumping the pinned libtensorflow** maps to a tfjs-native version bump by impact: additive only (new ops, no TS API change) → **minor**; removes/renames ops or changes behavior users can depend on → **major**; a pure rebuild on the same libtensorflow → **patch**.
-- Every libtensorflow bump must update `VERSION`, add the new archive checksums (`CHECKSUMS`), and state the libtensorflow version in the release notes.
+- Every libtensorflow bump must update `VERSION`, add the new archive checksums (`CHECKSUMS`) and the checksums of any headers it patches (`HEADER_CHECKSUMS`), regenerate the op wrappers (`bun run codegen`), and state the libtensorflow version in the release notes.
 - Consumers may override the version with `TFJS_NATIVE_LIBTENSORFLOW_VERSION`, but unpinned versions are best-effort (checksum unverified, headers unverified).
 
 ## Development Environment Rules

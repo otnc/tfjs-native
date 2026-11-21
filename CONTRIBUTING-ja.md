@@ -16,7 +16,7 @@
 | **Node.js** | 22 以上 | prebuild addon の ABI ターゲット。`node-gyp` の実行にも使用 | <https://nodejs.org> |
 | **uv** | 最新、**PATH に通す** | `node-gyp` が必要とする Python を解決し、`check:cpp`/`format:cpp` の `clang-format` 実行にも使用 | <https://docs.astral.sh/uv/getting-started/installation/> |
 | **C++ ツールチェーン** | OS 別 | N-API addon のコンパイル | [下記](#os-別-c-ツールチェーン) |
-| **libtensorflow** | 2.10.0（既定） | addon がリンクするネイティブ C ライブラリ | 自動取得 |
+| **libtensorflow** | 2.15.0(既定) | addon がリンクするネイティブ C ライブラリ | 自動取得 |
 
 uv は必須の前提ツールです。`bun run build:native`/`bun run setup` は素の `uv` を、`bun run check:cpp`/`format:cpp` は素の `uvx` を、いずれも **PATH 解決前提**で呼び出します。公式インストーラなら既定で PATH に追加されます。カスタムな場所に入れて PATH に無い場合は、その `bin` ディレクトリを自分で PATH に追加してください（Windows: `[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";<dir>", "User")` の後、新しいシェルを開く）。
 
