@@ -16,10 +16,10 @@ What the package exposes today, organized by the milestone that introduced it (s
 
 | API | Description |
 |---|---|
-| `tensor(values, shape?, dtype?): Tensor` | From a scalar, a rectangular nested array, or a flat `TypedArray`. Shape inferred when omitted. |
+| `tensor(values, shape?, dtype?): Tensor` | From a scalar, a rectangular nested array, or a flat `TypedArray`. Shape inferred when omitted. Without a dtype, string or `Uint8Array` leaves give `string`, anything else `float32`. |
 | `scalar(value, dtype?): Tensor` | Rank-0 tensor. |
-| `zeros(shape, dtype?): Tensor` | Tensor filled with 0. |
-| `ones(shape, dtype?): Tensor` | Tensor filled with 1. |
+| `zeros(shape, dtype?): Tensor` | Tensor filled with 0 (empty strings for `string`). |
+| `ones(shape, dtype?): Tensor` | Tensor filled with 1 (`1 + 0i` for `complex64`; not defined for `string`). |
 
 ### `Tensor`
 
@@ -30,8 +30,9 @@ What the package exposes today, organized by the milestone that introduced it (s
 | `size: number` | Element count. |
 | `rank: number` | Number of dimensions. |
 | `isDisposed: boolean` | Whether the native handle was freed. |
-| `data(): Promise<ArrayBufferView>` / `dataSync()` | Read the raw data as the dtype's `TypedArray`. |
-| `array(): Promise<NestedList>` / `arraySync()` | Read back as a nested JS array shaped like `shape`. |
+| `data(): Promise<ArrayBufferView>` / `dataSync()` | Read the raw data as the dtype's `TypedArray`. Throws for `string`. |
+| `bytes(): Promise<Uint8Array[]>` / `bytesSync()` | Read a `string` tensor's elements as raw bytes, flat in row-major order. |
+| `array(): Promise<NestedList>` / `arraySync()` | Read back as a nested JS array shaped like `shape`. `string` elements are decoded as UTF-8. |
 | `dispose(): void` | Free the native handle (idempotent). |
 
 ### Memory & dtypes
@@ -39,7 +40,11 @@ What the package exposes today, organized by the milestone that introduced it (s
 | API | Description |
 |---|---|
 | `tidy(fn)` | Runs `fn`, disposing tensors it created except those in its return value. |
-| `DType`, `DEFAULT_DTYPE` | dtype table. Supported: `float32` (default), `float64`, `int32`, `int64` (read back as `bigint`), `uint8`, `bool`. `string` / `complex64` are planned. |
+| `DType`, `DEFAULT_DTYPE` | dtype table. Supported: `float32` (default), `float64`, `int32`, `int64` (read back as `bigint`), `uint8`, `bool`, `string`, `complex64`. |
+
+`string` tensors hold UTF-8 text or arbitrary bytes (for example an encoded image to feed `decodeJpeg`). Pass `Uint8Array` leaves for binary data and read it back with `bytes()`, since `array()` decodes as UTF-8.
+
+`complex64` follows tfjs: build one with `complex(real, imag)` (or from an interleaved `[re, im, ...]` `Float32Array`), take it apart with `real` / `imag`, and expect `dataSync()` and the innermost dimension of `array()` to hold interleaved pairs.
 
 int64 is first-class here (via `BigInt64Array`), unlike `@tensorflow/tfjs`, which stops at int32.
 

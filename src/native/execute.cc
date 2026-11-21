@@ -176,7 +176,6 @@ Napi::Value GetAllOps(const Napi::CallbackInfo& info) {
 void RegisterExecute(Napi::Env env, Napi::Object exports) {
   exports.Set("execute", Napi::Function::New(env, Execute));
   exports.Set("getAllOps", Napi::Function::New(env, GetAllOps));
-  // TODO(M4): gradient(ctx, ys, xs, dys).
 }
 
 }  // namespace tfjs_native

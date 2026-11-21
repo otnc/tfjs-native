@@ -18,7 +18,7 @@ describe("dtype mapping", () => {
     expect(TypedArrayFor.int64).toBe(BigInt64Array);
   });
 
-  it("has a TypedArray for every named dtype except string", () => {
+  it("has a TypedArray for every fixed-width dtype", () => {
     for (const name of Object.keys(DType)) {
       if (name === "string") continue;
       expect(TypedArrayFor).toHaveProperty(name);

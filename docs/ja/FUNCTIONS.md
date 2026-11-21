@@ -16,10 +16,10 @@
 
 | API | 説明 |
 |---|---|
-| `tensor(values, shape?, dtype?): Tensor` | スカラー・矩形のネスト配列・フラットな `TypedArray` から生成。`shape` 省略時は推論。 |
+| `tensor(values, shape?, dtype?): Tensor` | スカラー・矩形のネスト配列・フラットな `TypedArray` から生成。`shape` 省略時は推論。`dtype` を省略すると、要素が文字列か `Uint8Array` なら `string`、それ以外は `float32` になる。 |
 | `scalar(value, dtype?): Tensor` | ランク 0 のテンソル。 |
-| `zeros(shape, dtype?): Tensor` | 0 で埋めたテンソル。 |
-| `ones(shape, dtype?): Tensor` | 1 で埋めたテンソル。 |
+| `zeros(shape, dtype?): Tensor` | 0 で埋めたテンソル(`string` では空文字列)。 |
+| `ones(shape, dtype?): Tensor` | 1 で埋めたテンソル(`complex64` では `1 + 0i`。`string` では使えない)。 |
 
 ### `Tensor`
 
@@ -30,8 +30,9 @@
 | `size: number` | 要素数。 |
 | `rank: number` | 次元数。 |
 | `isDisposed: boolean` | ネイティブハンドルが解放済みか。 |
-| `data(): Promise<ArrayBufferView>` / `dataSync()` | dtype の `TypedArray` として生データを読み出す。 |
-| `array(): Promise<NestedList>` / `arraySync()` | `shape` の形のネスト配列として読み出す。 |
+| `data(): Promise<ArrayBufferView>` / `dataSync()` | dtype の `TypedArray` として生データを読み出す。`string` では例外を投げる。 |
+| `bytes(): Promise<Uint8Array[]>` / `bytesSync()` | `string` テンソルの各要素をバイト列として、行優先のフラットな配列で読み出す。 |
+| `array(): Promise<NestedList>` / `arraySync()` | `shape` の形のネスト配列として読み出す。`string` の要素は UTF-8 としてデコードする。 |
 | `dispose(): void` | ネイティブハンドルを解放（冪等）。 |
 
 ### メモリと dtype
@@ -39,7 +40,11 @@
 | API | 説明 |
 |---|---|
 | `tidy(fn)` | `fn` を実行し、戻り値に含まれないテンソルを破棄する。 |
-| `DType`, `DEFAULT_DTYPE` | dtype 表。対応: `float32`（既定）, `float64`, `int32`, `int64`（`bigint` で読み出し）, `uint8`, `bool`。`string` / `complex64` は予定。 |
+| `DType`, `DEFAULT_DTYPE` | dtype 表。対応: `float32`（既定）, `float64`, `int32`, `int64`（`bigint` で読み出し）, `uint8`, `bool`, `string`, `complex64`。 |
+
+`string` テンソルには UTF-8 のテキストも任意のバイト列(`decodeJpeg` に渡すエンコード済み画像など)も入れられます。`array()` は UTF-8 としてデコードするので、バイナリは `Uint8Array` の要素で渡し、`bytes()` で読み出してください。
+
+`complex64` は tfjs と同じ扱いです。`complex(real, imag)`(または `[re, im, ...]` と交互に並べた `Float32Array`)で作り、`real` / `imag` で分解します。`dataSync()` と `array()` の最内次元には実部と虚部が交互に入ります。
 
 int64 を第一級で扱えます（`BigInt64Array` 経由）。int32 止まりの `@tensorflow/tfjs` との違いです。
 
