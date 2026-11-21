@@ -10,7 +10,7 @@ tfjs-native is in active development. This page tracks what works today; see the
 |---|---|---|
 | M0 Skeleton | ✅ done | addon loads libtensorflow; `version()` |
 | M1 Tensor | ✅ done | tensors, dtypes (incl. `int64` as BigInt), `data`/`array`, `tidy` |
-| M2 Eager ops | ✅ done | the full op registry (~1,295 generated + hand-written), `runOp` |
+| M2 Eager ops | ✅ done | the full op registry (~1,334 generated + hand-written), `runOp` |
 | M3 SavedModel | ✅ done | `loadSavedModel`, signature resolution, `predict`/`run` |
 | M4 Training | ✅ done | `grads`/`valueAndGrads`, `Variable`, `sgd`/`adam`/`rmsprop`, `minimize` |
 | M5 Distribution | ✅ done | per-OS prebuilds, automatic libtensorflow fetch, and a trusted-publish release workflow |

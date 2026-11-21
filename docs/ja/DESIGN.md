@@ -182,7 +182,7 @@ export interface NativeBinding {
 公開 C API に **eager の勾配テープは無い**（`TFE_*Tape*` シンボルが存在しないことを実測で確認）。勾配 API は `TF_Graph` に対する `TF_AddGradients` のみ。そこで勾配は **記録＋リプレイ**（`tf.function` 相当）で実装します。
 
 1. `tape.ts`: テープが有効な間、すべての op を記録する。記録は ops 層の `runOp` に相乗りさせるため、約 1,300 op すべてが op ごとの追加実装ゼロでトレース対象になる。テープが無いときは null チェック1つのみ。
-2. `gradients.ts`: 記録を `TF_Graph` に再構築する。微分対象の入力（`xs`）は Placeholder に、それ以外の葉は eager の値から Const として焼き込む。`TF_AddGradients` でグラフを微分し、**TF 自身の勾配定義**（2.10 で 140 op 登録済み）をそのまま使う（手書きしない）。
+2. `gradients.ts`: 記録を `TF_Graph` に再構築する。微分対象の入力（`xs`）は Placeholder に、それ以外の葉は eager の値から Const として焼き込む。`TF_AddGradients` でグラフを微分し、**TF 自身の勾配定義**(2.15 で 143 op 登録済み)をそのまま使う（手書きしない）。
 3. セッションで forward と backward をまとめて実行し、結果は eager の `Tensor` で返る。公開 API は `grads(fn, xs)` と `valueAndGrads(fn, xs)`。
 
 `TF_AddGradients` の結果は3種類あり、すべて明示的に扱う: 勾配ノード（正常）、`REGISTER_NO_GRADIENT_OP` の op（44 個、例 `Floor`）は **null**、到達不能な入力や勾配未登録 op は **Status エラー**。「使える勾配が無い」場合は必ず表面化させ、黙って 0 にはしない。
@@ -207,7 +207,7 @@ Optimizer（`sgd` / `adam` / `rmsprop`、`minimize`）は **TS 側で eager op �
 - libtensorflow を npm tarball に同梱しない（サイズ / ライセンス / アーキ差のため）。
 - `postinstall` で、現在の OS/arch/（CPU|GPU）向けの**公式 libtensorflow アーカイブを取得・展開**する。
 - **URL とアーカイブの checksum を固定し検証**する（改竄・取り違え防止）。バージョンは 1 か所で管理する。
-- **バージョン固定（2.10.0）とヘッダ完全性。** 既定は libtensorflow 2.10.0。全プラットフォームで C API ヘッダが自己完結しているため。2.12+ の新しいアーカイブは Windows で分離ヘッダ（`tf_buffer.h` と `tsl/*` ツリー）が欠落しビルドが壊れる。安全策として、`install.mjs` は展開後に参照されているのに欠けている `tensorflow/*.h` を同一タグのソースから取得する（完全なアーカイブでは no-op）。2.11 より新しい既定に上げるには `tsl/*` のヘッダ欠落解決が必要で、将来課題。
+- **バージョン固定(2.15.0)とヘッダ完全性。** 既定は libtensorflow 2.15.0。公式の C ライブラリのアーカイブが出ている最新リリースで、2.16 以降は公開されていない。2.12 以降の Windows 版アーカイブは分離された公開ヘッダ(`tf_buffer.h` と `tsl/*` ツリーの一部)が欠けていて、そのままではビルドできない。そこで `install.mjs` は展開後、addon が使うヘッダ(`c_api.h`、`eager/c_api.h`、`tf_tstring.h`)から辿れる include を調べ、欠けている `tensorflow/*.h` と `tsl/*.h` を同じタグのソースから取得する(ソースでは `tsl/*` は `third_party/xla/third_party/tsl/` の下にある)。固定バージョン用に取得するヘッダは checksum を検証する。どれも Linux/macOS 版アーカイブに入っているものとバイト単位で同一である。ヘッダが揃ったアーカイブでは何もしない。
 - ダウンロード元が無い環境向けに、既存の libtensorflow を `LIBTENSORFLOW_ROOT` で指す抜け道を用意する。
 - **Bun で install する利用者への注意**: Bun は依存の `postinstall`/`install` を既定でブロックする。利用側 `package.json` の `trustedDependencies` に `"tfjs-native"` を追加する必要がある（README に明記）。取得済み libtensorflow を指す `LIBTENSORFLOW_ROOT` でも回避できる。
 
@@ -259,7 +259,7 @@ bun run format       # biome format --write
 
 1. **M0 スケルトン**: addon が libtensorflow をロードし `version()` を返す smoke test。完了。
 2. **M1 Tensor**: 完了。dtype/shape、JS↔TF のデータ往復、`data()`/`dataSync()`/`array()`、および `tidy`。
-3. **M2 Eager ops**: 完了。native `execute` + TFE_Context + 手書き op セット（M2a）に加え、protobufjs による `TF_GetAllOpList` から約 1,295 ラッパを生成（M2b）。生成ファイル（`src/ops/generated/index.ts`）はコミット済みで、libtensorflow 更新時に再生成する。
+3. **M2 Eager ops**: 完了。native `execute` + TFE_Context + 手書き op セット（M2a）に加え、protobufjs による `TF_GetAllOpList` から約 1,334 ラッパを生成（M2b）。生成ファイル（`src/ops/generated/index.ts`）はコミット済みで、libtensorflow 更新時に再生成する。
 4. **M3 SavedModel**: 完了。addon 側で `TF_LoadSessionFromSavedModel` + `TF_SessionRun` を実装し、signature は MetaGraphDef を自前の小さな protobuf リーダで解析（実行時依存をゼロのまま維持）。
 5. **M4 学習**: 完了。記録＋リプレイによる勾配（`grads`/`valueAndGrads`）、`Variable`、`sgd`/`adam`/`rmsprop`、損失グラフをキャッシュする `minimize`。§8 参照。
 6. **M5 配布**: 完了。prebuild マトリクス + libtensorflow 自動取得は CI で 3 プラットフォームとも緑。加えて手動起動の trusted-publish リリースワークフローも整備済み（§11 参照）。

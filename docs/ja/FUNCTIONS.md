@@ -50,7 +50,7 @@ int64 を第一級で扱えます（`BigInt64Array` 経由）。int32 止まり�
 
 ## eager op（M2）
 
-eager 実行パスは稼働済みです。**約 1,295 op** を TF の op registry（`TF_GetAllOpList`）から生成しています。tfjs に無い `scatterNd`・`gatherNd`・`nonMaxSuppressionV2`・`conv2D`・`softmax` なども含みます。生成ラッパは入力（`Tensor` / `Tensor[]`）と出力数が型付きで、型・サイズ属性は入力から自動導出し、それ以外は汎用 options で渡します（省略すると op の TF 既定値を使用）。
+eager 実行パスは稼働済みです。**約 1,334 op** を TF の op registry（`TF_GetAllOpList`）から生成しています。tfjs に無い `scatterNd`・`gatherNd`・`nonMaxSuppressionV2`・`conv2D`・`softmax` なども含みます。生成ラッパは入力（`Tensor` / `Tensor[]`）と出力数が型付きで、型・サイズ属性は入力から自動導出し、それ以外は汎用 options で渡します（省略すると op の TF 既定値を使用）。
 
 その上に、より扱いやすいシグネチャの手書き op があります:
 
@@ -87,7 +87,7 @@ model.dispose();
 
 ## 学習（M4）
 
-自動微分と optimizer。勾配は記録＋リプレイ方式: 損失を eager で実行しながらテープに記録し、グラフに再構築して TensorFlow 自身の勾配定義を適用します（2.10 では 140 op に勾配あり）。
+自動微分と optimizer。勾配は記録＋リプレイ方式: 損失を eager で実行しながらテープに記録し、グラフに再構築して TensorFlow 自身の勾配定義を適用します(2.15 では 143 op に勾配あり)。
 
 | API | 説明 |
 |---|---|

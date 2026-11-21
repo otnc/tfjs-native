@@ -16,7 +16,7 @@ Working on the **pure-TS** parts only needs **Bun**. Building the **native addon
 | **Node.js** | >= 22 | ABI target for the prebuilt addon; also runs `node-gyp` | <https://nodejs.org> |
 | **uv** | latest, **on PATH** | resolves the Python `node-gyp` needs, and runs `clang-format` for `check:cpp`/`format:cpp` | <https://docs.astral.sh/uv/getting-started/installation/> |
 | **C++ toolchain** | per-OS | compiles the N-API addon | see [below](#c-toolchain-per-os) |
-| **libtensorflow** | 2.10.0 (default) | the native C library the addon links | fetched automatically |
+| **libtensorflow** | 2.15.0 (default) | the native C library the addon links | fetched automatically |
 
 uv is a hard prerequisite: `bun run build:native`/`bun run setup` shell out to bare `uv`, and `bun run check:cpp`/`format:cpp` shell out to bare `uvx`, assuming both resolve via PATH — the official installer adds them there by default. If you installed uv somewhere it doesn't put on PATH, add its `bin` directory to PATH yourself (Windows: `[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";<dir>", "User")`, then open a new shell).
 
