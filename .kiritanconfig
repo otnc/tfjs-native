@@ -1,0 +1,22 @@
+// Kiritan builds every bilingual document from one base file under base/.
+// Edit base/**/*.base.md, never the generated outputs, then run `bun run docs:build`.
+export default {
+  locales: { default: "en", list: ["en", "ja"] },
+  // A blank line inside a GitHub alert is `>` followed by exactly three spaces.
+  markdown: { alertBlankLineSpaces: 3 },
+  sources: [
+    // Root documents: README.md + README-ja.md, CONTRIBUTING.md + CONTRIBUTING-ja.md.
+    { glob: "base/README.base.md", strategy: "inline", naming: { template: "{base}-{locale}.{ext}" } },
+    {
+      glob: "base/CONTRIBUTING.base.md",
+      strategy: "inline",
+      naming: { template: "{base}-{locale}.{ext}" },
+    },
+    // docs/foo.md + docs/ja/foo.md.
+    {
+      glob: "base/docs/*.base.md",
+      strategy: "inline",
+      naming: { template: "docs/{locale}/{base}.{ext}", defaultTemplate: "docs/{base}.{ext}" },
+    },
+  ],
+};

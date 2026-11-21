@@ -35,6 +35,10 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
+      # README/CONTRIBUTING/docs are generated from base/ by Kiritan.
+      - name: Docs in sync with base/
+        run: bun run docs:check
+
       # Native-dependent tests skip themselves without a built addon.
       - name: Test (pure)
         run: bun test

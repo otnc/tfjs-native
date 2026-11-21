@@ -1,6 +1,6 @@
 # tfjs-native
 
-**English** | [日本語](./README-ja.md)
+**English** | [日本語](README-ja.md)
 
 [![CI](https://github.com/otnc/tfjs-native/actions/workflows/ci.yml/badge.svg)](https://github.com/otnc/tfjs-native/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/tfjs-native.svg)](https://www.npmjs.com/package/tfjs-native)

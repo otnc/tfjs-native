@@ -1,10 +1,10 @@
 # Contributing to tfjs-native
 
-[English](./CONTRIBUTING.md) | **日本語**
+[English](CONTRIBUTING.md) | **日本語**
 
 貢献に興味を持っていただきありがとうございます。本ガイドは開発環境のセットアップとワークフローを扱います。設計は [docs/ja/DESIGN.md](./docs/ja/DESIGN.md)、必須の規約（コミット・言語・リリース）は [docs/ja/RULES.md](./docs/ja/RULES.md) を参照してください。
 
-リポジトリに残る成果物とコミュニケーションはすべて **英語** です（言語ポリシーは [docs/ja/RULES.md](./docs/ja/RULES.md)）。日本語ローカライズは別ファイルにします（`README-ja.md`、`docs/ja/*`）。
+リポジトリに残る成果物とコミュニケーションはすべて **英語** です（言語ポリシーは [docs/ja/RULES.md](./docs/ja/RULES.md)）。英語版と日本語版のドキュメントは Kiritan で `base/` から生成するので、base ファイルを編集してください([docs/ja/RULES.md](./docs/ja/RULES.md) のローカライズの項)。
 
 ## 前提環境・前提ツール
 
@@ -94,6 +94,8 @@ bun run check:all   # check + check:cpp（全部）
 bun run format      # biome format --write（src/, scripts/, ルート設定）
 bun run format:cpp  # clang-format -i（src/native）
 bun run format:all  # format + format:cpp
+bun run docs:build  # base/ から README・CONTRIBUTING・docs を再生成(Kiritan)
+bun run docs:check  # 翻訳の欠落・古さや、base/ とずれた生成物があれば失敗
 ```
 
 `check`・`lint`（biome）は `src/`・`scripts/`・ルート設定の JS/TS/JSON を、`check:cpp` は C++ addon を対象にします。C++ は固定バージョンの `clang-format`（設定は `.clang-format`、`uvx` 経由で実行するため別途インストール不要）を使います。`check:all` は両方を実行します。CI は biome を全 OS、C++ チェックを Linux で実行します。
@@ -118,7 +120,7 @@ bun run format:all  # format + format:cpp
 
 ## テスト fixture の再生成
 
-SavedModel のテストは `test/fixtures/times_two`（y = x * 2）という極小 fixture を使います。TensorFlow の Python パッケージは fixture を**生成するときだけ**必要で、tfjs-native 自体は依存しません。Python 3.12 を使ってください（TensorFlow に 3.13/3.14 の wheel が無いため）:
+SavedModel のテストは `test/fixtures/times_two`（y = x \* 2）という極小 fixture を使います。TensorFlow の Python パッケージは fixture を**生成するときだけ**必要で、tfjs-native 自体は依存しません。Python 3.12 を使ってください（TensorFlow に 3.13/3.14 の wheel が無いため）:
 
 ```sh
 uv venv --python 3.12 .venv-tf
