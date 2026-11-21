@@ -6,7 +6,7 @@
 
 ## 言語ポリシー
 
-**原則: リポジトリに残る成果物・コミュニケーションはすべて英語。** リポジトリ内で日本語を残すのは `.private/`（untracked）と、明示的にローカライズしたファイル（`*-ja.md`、`docs/ja/*`）だけです。
+**原則: リポジトリに残る成果物・コミュニケーションはすべて英語。** リポジトリ内で日本語を残すのは `.private/`（untracked）と、日英ドキュメントの日本語部分(`base/` 内の `locale=ja` ブロックと、そこから生成される `*-ja.md` と `docs/ja/*`)だけです。
 
 | 対象 | 言語 |
 |---|---|
@@ -19,18 +19,21 @@
 | README / docs / CONTRIBUTING 等 | **英語を正**とする |
 | `.private/` の翻訳 | 日本語可（untracked） |
 
-### ローカライズ（日本語版の追加）
+### ローカライズ(Kiritan による日英ドキュメント)
 
-正となる英語ファイルは既定名のまま置きます。日本語版を足すときは**別ファイル**にし、名前で示します。
+英語版と日本語版のドキュメントは、[Kiritan](https://github.com/otnc/kiritan) がそれぞれ 1 つの base ファイルから生成する。**編集するのは base ファイルで、生成物は直接編集しない。** `bun run docs:build` が生成物を上書きし、base ファイルとずれていれば CI が失敗する。
 
-| 英語（正） | 日本語版 |
-|---|---|
-| `README.md` | `README-ja.md` |
-| `CONTRIBUTING.md` | `CONTRIBUTING-ja.md` |
-| `docs/foo.md` | `docs/ja/foo.md` |
+| base ファイル(編集する) | 生成される英語版 | 生成される日本語版 |
+|---|---|---|
+| `base/README.base.md` | `README.md` | `README-ja.md` |
+| `base/CONTRIBUTING.base.md` | `CONTRIBUTING.md` | `CONTRIBUTING-ja.md` |
+| `base/docs/foo.base.md` | `docs/foo.md` | `docs/ja/foo.md` |
 
-- 既定名のファイル（`README.md` 等）に日本語を混在させない。
-- 日本語版は冒頭で英語版へリンクする。内容が乖離した場合は英語版を正として合わせる。
+- 各セクションは見出しごとに `:::kiritan{locale=en}` と `:::kiritan{locale=ja}` のブロックの組で書く。どのブロックにも入っていない内容(バッジや共通のコードブロック)は両方の言語に出力される。
+- 組になったブロックは同じ変更で両方とも更新する。正は英語版のままで、食い違ったら日本語版を英語版に合わせる。
+- 言語切り替えの行は自動で生成されるので、手で書かない。
+- 編集したら `bun run docs:build` と `bun run docs:check` を実行し、base ファイルと再生成した出力を一緒にコミットする。
+- 新しいドキュメントは、`base/docs/*.base.md` 以外なら `.kiritanconfig` の `sources` に追加する。
 
 ### Markdown の改行
 
@@ -55,6 +58,7 @@
 - **footer**（任意）: `BREAKING CHANGE: ...` / `Closes #123`
 
 例:
+
 ```
 feat(ops): generate typed wrappers from TF_GetAllOpList
 fix(native): free TFE_TensorHandle on dtype mismatch

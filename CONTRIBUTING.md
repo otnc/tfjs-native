@@ -1,10 +1,10 @@
 # Contributing to tfjs-native
 
-**English** | [日本語](./CONTRIBUTING-ja.md)
+**English** | [日本語](CONTRIBUTING-ja.md)
 
 Thanks for your interest! This guide covers the developer setup and workflow. For the project design read [docs/DESIGN.md](./docs/DESIGN.md); for the mandatory conventions (commits, language, release) read [docs/RULES.md](./docs/RULES.md).
 
-All repo artifacts and communication are in **English** (see the language policy in [docs/RULES.md](./docs/RULES.md)). Japanese localizations are separate files (`README-ja.md`, `docs/ja/*`).
+All repo artifacts and communication are in **English** (see the language policy in [docs/RULES.md](./docs/RULES.md)). The English and Japanese documents are generated from `base/` with Kiritan; edit the base files (see the localization rules in [docs/RULES.md](./docs/RULES.md)).
 
 ## Prerequisites
 
@@ -94,6 +94,8 @@ bun run check:all   # check + check:cpp (everything)
 bun run format      # biome format --write (src/, scripts/, root configs)
 bun run format:cpp  # clang-format -i (src/native)
 bun run format:all  # format + format:cpp
+bun run docs:build  # regenerate README/CONTRIBUTING/docs from base/ (Kiritan)
+bun run docs:check  # fail on a missing/stale translation or an output that drifted from base/
 ```
 
 `check`/`lint` (biome) cover all JS/TS/JSON under `src/`, `scripts/`, and the root configs; `check:cpp` covers the C++ addon with a pinned `clang-format` (config in `.clang-format`, run via `uvx` — no separate install). `check:all` runs both. CI runs biome on every OS and the C++ check on Linux.
@@ -118,7 +120,7 @@ Op wrappers under `src/ops/generated/` are produced by `scripts/codegen/` from t
 
 ## Regenerating test fixtures
 
-The SavedModel tests use a tiny fixture in `test/fixtures/times_two` (y = x * 2). TensorFlow's Python package is needed only to *produce* it — tfjs-native never depends on it. Use Python 3.12 (TensorFlow has no 3.13/3.14 wheels):
+The SavedModel tests use a tiny fixture in `test/fixtures/times_two` (y = x \* 2). TensorFlow's Python package is needed only to *produce* it — tfjs-native never depends on it. Use Python 3.12 (TensorFlow has no 3.13/3.14 wheels):
 
 ```sh
 uv venv --python 3.12 .venv-tf

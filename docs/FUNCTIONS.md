@@ -1,6 +1,6 @@
 # tfjs-native — Functions & Features
 
-**English** | [日本語](./ja/FUNCTIONS.md)
+**English** | [日本語](ja/FUNCTIONS.md)
 
 What the package exposes today, organized by the milestone that introduced it (see the [roadmap](./DESIGN.md#12-roadmap)). Signatures use TypeScript.
 

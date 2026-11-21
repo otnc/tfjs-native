@@ -1,6 +1,6 @@
 # Status
 
-**English** | [日本語](./ja/STATUS.md)
+**English** | [日本語](ja/STATUS.md)
 
 tfjs-native is in active development. This page tracks what works today; see the [roadmap](./DESIGN.md#12-roadmap) for the plan and [Functions](./FUNCTIONS.md) for the API.
 

@@ -1,0 +1,189 @@
+# tfjs-native
+
+[![CI](https://github.com/otnc/tfjs-native/actions/workflows/ci.yml/badge.svg)](https://github.com/otnc/tfjs-native/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/tfjs-native.svg)](https://www.npmjs.com/package/tfjs-native)
+![node](https://img.shields.io/badge/node-%3E%3D22-brightgreen)
+![platform](https://img.shields.io/badge/platform-windows%20%7C%20linux%20%7C%20macos-lightgrey)
+[![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
+
+:::kiritan{locale=en}
+TensorFlow (C++/Python) native wrapper for Node.js.
+
+`@tensorflow/tfjs` maps only ~300 of TensorFlow's ops; the original op registry has 1,400+. **tfjs-native** binds TensorFlow's **C API** (the native library `@tensorflow/tfjs-node` also uses) to expose the **full op registry** to typed TypeScript, plus SavedModel execution and a thin training layer.
+:::
+
+:::kiritan{locale=ja}
+Node.js 向けの TensorFlow（C++/Python）ネイティブ wrapper。
+
+`@tensorflow/tfjs` がマップする TF op は約 300 個ですが、オリジナルの op registry には 1,400 以上あります。**tfjs-native** は TensorFlow の **C API**（`@tensorflow/tfjs-node` も使うネイティブライブラリ）をバインドし、**全 op registry** を型付き TypeScript から使えるようにします。加えて SavedModel の実行と薄い学習レイヤも目標です。
+:::
+
+Original: [tensorflow/tensorflow](https://github.com/tensorflow/tensorflow)
+
+:::kiritan{locale=en}
+## Requirements
+
+- **Node.js 22+**, on **Windows / Linux / macOS**.
+- Prebuilt addons ship for **linux-x64**, **darwin-x64**, and **win32-x64**; other platforms build from source (needs Python and a C++ toolchain).
+- `libtensorflow` (the C library) is fetched automatically on install — no manual setup on supported platforms.
+:::
+
+:::kiritan{locale=ja}
+## 動作要件
+
+- **Node.js 22 以上**（**Windows / Linux / macOS**）。
+- prebuild を配布するのは **linux-x64**・**darwin-x64**・**win32-x64** です。それ以外の環境ではソースからビルドします（Python と C++ ツールチェーンが必要）。
+- `libtensorflow`（C ライブラリ）はインストール時に自動取得されます。対応環境では手動セットアップは不要です。
+:::
+
+:::kiritan{locale=en}
+## Install
+
+```sh
+npm install tfjs-native
+# or: bun add tfjs-native
+```
+
+The matching `libtensorflow` build downloads on install.
+
+- **Allow the install script.** Some package managers skip a dependency's install script by default, which skips the download. Allow it for tfjs-native, or set `LIBTENSORFLOW_ROOT` to an existing install:
+  - **Bun**: add `"tfjs-native"` to `trustedDependencies`.
+  - **pnpm**: add `"tfjs-native"` to `pnpm.onlyBuiltDependencies`.
+  - **npm**: runs it today, but is expected to require opt-in in a future release.
+- **macOS (Apple Silicon)**: no official arm64 build — `brew install libtensorflow`, then set `LIBTENSORFLOW_ROOT`.
+- Use a mirror with `TFJS_NATIVE_CDN_STORAGE=https://your-mirror/`.
+:::
+
+:::kiritan{locale=ja}
+## インストール
+
+```sh
+npm install tfjs-native
+# または: bun add tfjs-native
+```
+
+インストール時に、環境に合った `libtensorflow` がダウンロードされます。
+
+- **インストールスクリプトの許可。** パッケージマネージャによっては依存のインストールスクリプトを既定で実行せず、ダウンロードがスキップされます。tfjs-native を許可するか、`LIBTENSORFLOW_ROOT` で既存のインストールを指定してください:
+  - **Bun**: `trustedDependencies` に `"tfjs-native"` を追加。
+  - **pnpm**: `pnpm.onlyBuiltDependencies` に `"tfjs-native"` を追加。
+  - **npm**: 現状は実行しますが、今後 opt-in が必要になる見込みです。
+- **macOS（Apple Silicon）**: 公式 arm64 ビルドが無いため、`brew install libtensorflow` の後に `LIBTENSORFLOW_ROOT` を設定してください。
+- ミラーは `TFJS_NATIVE_CDN_STORAGE=https://your-mirror/` で指定します。
+:::
+
+:::kiritan{locale=en}
+## Usage
+
+```ts
+import { tensor, zeros, tidy, version } from "tfjs-native";
+
+console.log(version()); // linked libtensorflow version
+
+const a = tensor([
+  [1, 2, 3],
+  [4, 5, 6],
+]);
+console.log(a.shape); // [2, 3]
+console.log(await a.array()); // [[1, 2, 3], [4, 5, 6]]
+
+// int64 is first-class (read back as BigInt), unlike tfjs, which stops at int32.
+const ids = tensor([1, 2, 3], [3], "int64");
+
+// Scope-based memory management.
+const result = tidy(() => {
+  const z = zeros([2, 2]); // disposed at scope exit
+  return tensor([1, 1]); // kept
+});
+
+a.dispose();
+```
+:::
+
+:::kiritan{locale=ja}
+## 使い方
+
+```ts
+import { tensor, zeros, tidy, version } from "tfjs-native";
+
+console.log(version()); // リンクされた libtensorflow のバージョン
+
+const a = tensor([
+  [1, 2, 3],
+  [4, 5, 6],
+]);
+console.log(a.shape); // [2, 3]
+console.log(await a.array()); // [[1, 2, 3], [4, 5, 6]]
+
+// int64 を第一級サポート（BigInt で読み出し）。int32 止まりの tfjs との違い。
+const ids = tensor([1, 2, 3], [3], "int64");
+
+// スコープ単位のメモリ管理。
+const result = tidy(() => {
+  const z = zeros([2, 2]); // スコープ終了時に破棄
+  return tensor([1, 1]); // 保持
+});
+
+a.dispose();
+```
+:::
+
+:::kiritan{locale=en}
+## How it works
+
+```
+TypeScript API  ->  N-API addon (node-addon-api)  ->  libtensorflow C API
+```
+
+The addon links a pinned libtensorflow (currently 2.15.0), is compiled per platform, and ships as a prebuilt binary via `node-gyp-build`.
+:::
+
+:::kiritan{locale=ja}
+## 仕組み
+
+```
+TypeScript API  ->  N-API addon (node-addon-api)  ->  libtensorflow C API
+```
+
+addon は固定バージョンの libtensorflow(現在 2.15.0)をリンクし、プラットフォームごとにコンパイルされ、`node-gyp-build` 経由で prebuild バイナリとして配布されます。
+:::
+
+:::kiritan{locale=en}
+## Documentation
+
+- [Status](./docs/STATUS.md) — what works today, by milestone.
+- [Functions & features](./docs/FUNCTIONS.md) — the current API and the roadmap.
+- [Design](./docs/DESIGN.md) — architecture, scope, and the native contract.
+- [Contributing](./CONTRIBUTING.md) — dev environment (Bun, Python via uv, C++ toolchain) and workflow.
+:::
+
+:::kiritan{locale=ja}
+## ドキュメント
+
+- [ステータス](./docs/ja/STATUS.md) — マイルストーン別の現状。
+- [機能一覧](./docs/ja/FUNCTIONS.md) — 現在の API とロードマップ。
+- [設計](./docs/ja/DESIGN.md) — アーキテクチャ・スコープ・ネイティブ契約。
+- [コントリビュート](./CONTRIBUTING-ja.md) — 開発環境（Bun、uv による Python、C++ ツールチェーン）とワークフロー。
+:::
+
+:::kiritan{locale=en}
+## Author
+:::
+
+:::kiritan{locale=ja}
+## 著者
+:::
+
+otoneko. https://github.com/otnc
+
+:::kiritan{locale=en}
+## License
+
+[Apache 2.0](./LICENSE).
+:::
+
+:::kiritan{locale=ja}
+## ライセンス
+
+[Apache 2.0](./LICENSE) ライセンスで提供されています。
+:::
