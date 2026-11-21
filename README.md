@@ -68,7 +68,7 @@ a.dispose();
 TypeScript API  ->  N-API addon (node-addon-api)  ->  libtensorflow C API
 ```
 
-The addon links a pinned libtensorflow (currently 2.10.0), is compiled per platform, and ships as a prebuilt binary via `node-gyp-build`.
+The addon links a pinned libtensorflow (currently 2.15.0), is compiled per platform, and ships as a prebuilt binary via `node-gyp-build`.
 
 ## Documentation
 

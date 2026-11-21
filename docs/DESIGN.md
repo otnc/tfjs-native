@@ -182,7 +182,7 @@ export interface NativeBinding {
 The public C API has **no eager gradient tape** (verified: no `TFE_*Tape*` symbols exist). Its only gradient facility is `TF_AddGradients`, which works on a `TF_Graph`. So gradients use **record-and-replay** — like `tf.function`:
 
 1. `tape.ts`: while a tape is active, every op is recorded. Recording piggybacks on `runOp` in the ops layer, so all ~1,300 ops are traced with no per-op work. It is a single null check when no tape is active.
-2. `gradients.ts`: the recording is rebuilt as a `TF_Graph`. Differentiated inputs (`xs`) become Placeholders; other leaves are baked in as Consts from their eager values. `TF_AddGradients` then differentiates the graph, reusing **TensorFlow's own gradient definitions** (140 registered ops in 2.10) instead of hand-written ones.
+2. `gradients.ts`: the recording is rebuilt as a `TF_Graph`. Differentiated inputs (`xs`) become Placeholders; other leaves are baked in as Consts from their eager values. `TF_AddGradients` then differentiates the graph, reusing **TensorFlow's own gradient definitions** (143 registered ops in 2.15) instead of hand-written ones.
 3. A session runs forward + backward together; results come back as eager `Tensor`s. `grads(fn, xs)` and `valueAndGrads(fn, xs)` are the public entry points.
 
 `TF_AddGradients` has three outcomes, and all are handled explicitly: a gradient node (normal); **null** for an op marked `REGISTER_NO_GRADIENT_OP` (44 ops, e.g. `Floor`); and a **thrown Status** for an unreachable input or an op with no gradient at all. "No usable gradient" is always surfaced, never silently zeroed.
@@ -207,7 +207,7 @@ Optimizers (`sgd` / `adam` / `rmsprop`, `minimize`) are implemented **in TS with
 - Do not bundle libtensorflow in the npm tarball (size / license / arch differences).
 - On `postinstall`, **fetch and extract the official libtensorflow archive** for the current OS/arch/(CPU|GPU).
 - **Pin and verify the URL and archive checksum** (tamper/mismatch protection). The version is managed in one place.
-- **Version pin (2.10.0) and header completeness.** The default is libtensorflow 2.10.0 because its official archives ship a self-contained C-API header set on every platform. Newer archives (2.12+) omit split-out public headers on Windows (`tf_buffer.h`, and the whole `tsl/*` tree), which breaks the compile. As a safety net, `install.mjs` fetches any referenced-but-missing `tensorflow/*.h` from the matching source tag after extraction (a no-op on complete archives). Bumping the default past 2.11 requires solving the `tsl/*` header gap and is tracked as future work.
+- **Version pin (2.15.0) and header completeness.** The default is libtensorflow 2.15.0, the newest release with official C-library archives (none are published for 2.16+). Since 2.12 the Windows archive omits split-out public headers (`tf_buffer.h` and part of the `tsl/*` tree), which breaks the compile. After extraction, `install.mjs` walks the includes reachable from the headers the addon uses (`c_api.h`, `eager/c_api.h`, `tf_tstring.h`) and fetches any missing `tensorflow/*.h` or `tsl/*.h` from the matching source tag (`tsl/*` lives under `third_party/xla/third_party/tsl/` there). Fetched headers for the pinned version are checksum-verified; they are byte-identical to the copies the Linux/macOS archives ship. On complete archives this is a no-op.
 - Provide an escape hatch for environments with no download source: point at an existing local libtensorflow via `LIBTENSORFLOW_ROOT`.
 - **Note for consumers installing with Bun**: Bun blocks dependency `postinstall`/`install` scripts by default. The consumer must add `"tfjs-native"` to `trustedDependencies` in their `package.json` (documented in the README). Setting `LIBTENSORFLOW_ROOT` to an already-fetched libtensorflow also works around it.
 
@@ -259,7 +259,7 @@ bun run format       # biome format --write
 
 1. **M0 skeleton**: the addon loads libtensorflow and returns `version()` as a smoke test. Done.
 2. **M1 Tensor**: done. dtype/shape, JS<->TF data round-trip, `data()`/`dataSync()`/`array()`, plus `tidy`.
-3. **M2 Eager ops**: done. Native `execute` + TFE_Context + a hand-written op set (M2a), plus ~1,295 wrappers generated from `TF_GetAllOpList` via protobufjs (M2b). The generated file (`src/ops/generated/index.ts`) is committed and regenerated on a libtensorflow bump.
+3. **M2 Eager ops**: done. Native `execute` + TFE_Context + a hand-written op set (M2a), plus ~1,334 wrappers generated from `TF_GetAllOpList` via protobufjs (M2b). The generated file (`src/ops/generated/index.ts`) is committed and regenerated on a libtensorflow bump.
 4. **M3 SavedModel**: done. `TF_LoadSessionFromSavedModel` + `TF_SessionRun` in the addon, with signatures parsed from the MetaGraphDef by a small hand-rolled protobuf reader (keeps runtime dependencies at zero extra).
 5. **M4 Training**: done. Record-and-replay gradients (`grads`/`valueAndGrads`), `Variable`, `sgd`/`adam`/`rmsprop`, and `minimize` with a cached loss graph. See §8.
 6. **M5 Distribution**: done. Prebuild matrix + automatic libtensorflow fetch, green on CI for all three platforms, plus a manual-dispatch trusted-publish release workflow (see §11).

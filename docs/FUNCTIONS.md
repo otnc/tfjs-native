@@ -45,7 +45,7 @@ int64 is first-class here (via `BigInt64Array`), unlike `@tensorflow/tfjs`, whic
 
 ## Eager ops (M2)
 
-The eager execution path is live. **~1,295 ops are generated** from the TF op registry (`TF_GetAllOpList`) — including ops tfjs lacks, such as `scatterNd`, `gatherNd`, `nonMaxSuppressionV2`, `conv2D`, `softmax`. Generated wrappers have typed inputs (`Tensor` / `Tensor[]`) and a typed output count; type/size attributes are auto-derived from inputs, and the rest are passed via a generic options object (omit one to use the op's TF default).
+The eager execution path is live. **~1,334 ops are generated** from the TF op registry (`TF_GetAllOpList`) — including ops tfjs lacks, such as `scatterNd`, `gatherNd`, `nonMaxSuppressionV2`, `conv2D`, `softmax`. Generated wrappers have typed inputs (`Tensor` / `Tensor[]`) and a typed output count; type/size attributes are auto-derived from inputs, and the rest are passed via a generic options object (omit one to use the op's TF default).
 
 A set of hand-written ops sits on top with friendlier signatures:
 
@@ -82,7 +82,7 @@ model.dispose();
 
 ## Training (M4)
 
-Automatic differentiation and optimizers. Gradients use record-and-replay: the loss runs eagerly while a tape records it, then it is rebuilt as a graph so TensorFlow's own gradient definitions apply (140 ops have gradients in 2.10).
+Automatic differentiation and optimizers. Gradients use record-and-replay: the loss runs eagerly while a tape records it, then it is rebuilt as a graph so TensorFlow's own gradient definitions apply (143 ops have gradients in 2.15).
 
 | API | Description |
 |---|---|
