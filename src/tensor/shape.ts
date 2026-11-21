@@ -1,7 +1,7 @@
 // Pure shape helpers. No dependency on the native addon, so these are fully
 // unit-testable on their own.
 
-import type { NestedList, TensorScalar } from "./types.js";
+import type { NestedInput, TensorInputScalar } from "./types.js";
 
 /** Number of elements described by a shape. Empty shape (scalar) is 1. */
 export function sizeFromShape(shape: readonly number[]): number {
@@ -22,18 +22,18 @@ export function assertValidShape(shape: readonly number[]): void {
 }
 
 /** Infers the shape of a nested list by walking its first elements. */
-export function inferShape(value: NestedList): number[] {
+export function inferShape(value: NestedInput): number[] {
   const shape: number[] = [];
-  let cursor: NestedList = value;
+  let cursor: NestedInput = value;
   while (Array.isArray(cursor)) {
     shape.push(cursor.length);
-    cursor = cursor[0] as NestedList;
+    cursor = cursor[0] as NestedInput;
   }
   return shape;
 }
 
 /** Throws when a nested list is ragged (does not match `shape` rectangularly). */
-export function assertRectangular(value: NestedList, shape: readonly number[], dim = 0): void {
+export function assertRectangular(value: NestedInput, shape: readonly number[], dim = 0): void {
   if (dim === shape.length) {
     if (Array.isArray(value)) {
       throw new Error("tfjs-native: ragged array — nested deeper than its inferred shape");
@@ -44,18 +44,18 @@ export function assertRectangular(value: NestedList, shape: readonly number[], d
     throw new Error(`tfjs-native: ragged array — expected length ${shape[dim]} at depth ${dim}`);
   }
   for (const element of value) {
-    assertRectangular(element as NestedList, shape, dim + 1);
+    assertRectangular(element as NestedInput, shape, dim + 1);
   }
 }
 
 /** Flattens a nested list into `out` in row-major order. */
-export function flattenInto(value: NestedList, out: TensorScalar[]): void {
+export function flattenInto(value: NestedInput, out: TensorInputScalar[]): void {
   if (Array.isArray(value)) {
     for (const element of value) {
-      flattenInto(element as NestedList, out);
+      flattenInto(element as NestedInput, out);
     }
   } else {
-    out.push(value as TensorScalar);
+    out.push(value as TensorInputScalar);
   }
 }
 

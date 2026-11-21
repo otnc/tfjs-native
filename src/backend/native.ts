@@ -88,11 +88,15 @@ export interface NativeBinding {
   // process-wide singleton context internally.
   /** Wraps flat TypedArray data into a native TFE_TensorHandle. */
   createHandle(data: ArrayBufferView, shape: readonly number[], dtype: number): Handle;
+  /** Wraps one byte array per element into a native TF_STRING handle. */
+  createStringHandle(values: Uint8Array[], shape: readonly number[]): Handle;
+  /** Each element of a TF_STRING handle's tensor, as a copy of its bytes. */
+  handleStrings(h: Handle): Uint8Array[];
   /** Dimensions of the handle's tensor. */
   handleShape(h: Handle): number[];
   /** TF_DataType numeric code of the handle. */
   handleDtype(h: Handle): number;
-  /** Raw little-endian bytes of the handle's tensor (a copy). */
+  /** Raw little-endian bytes of a fixed-width handle's tensor (a copy). */
   handleData(h: Handle): Uint8Array;
   /** Eagerly frees the handle. Safe to call once; a no-op after GC finalize. */
   deleteHandle(h: Handle): void;
@@ -140,9 +144,6 @@ export interface NativeBinding {
   graphAddGradients(graph: Graph, ys: Port[], xs: Port[]): (Port | null)[];
   /** Creates a session over the graph; the session takes ownership of it. */
   graphNewSession(graph: Graph): Session;
-
-  // The rest of the surface (gradient / ...) is declared in docs/DESIGN.md §5
-  // and added as milestones land.
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: node-gyp-build has no bundled types.
